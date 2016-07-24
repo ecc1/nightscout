@@ -82,6 +82,7 @@ func RestOperation(op string, api string, v interface{}) ([]byte, error) {
 		return nil, err
 	}
 	req.Header.Add("api-secret", secret)
+	req.Header.Add("accept", "application/json")
 	if len(data) != 0 {
 		req.Header.Add("content-type", "application/json")
 	}
