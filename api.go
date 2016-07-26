@@ -2,8 +2,6 @@ package nightscout
 
 import (
 	"time"
-
-	"github.com/ecc1/medtronic"
 )
 
 // The JSON encoding of this information must match what is expected by the
@@ -24,6 +22,7 @@ type (
 		Filtered   uint32  `json:"filtered,omitempty"`
 		Unfiltered uint32  `json:"unfiltered,omitempty"`
 		Rssi       uint16  `json:"rssi,omitempty"`
+		Noise      uint16  `json:"noise,omitempty"`
 		Slope      float64 `json:"slope,omitempty"`
 		Intercept  float64 `json:"intercept,omitempty"`
 		Scale      float64 `json:"scale,omitempty"`
@@ -46,18 +45,18 @@ type (
 	}
 
 	Iob struct {
-		Iob medtronic.Insulin `json:"iob"`
+		Iob Insulin `json:"iob"`
 	}
 
 	Pump struct {
-		Battery   Battery           `json:"battery"`
-		Clock     time.Time         `json:"clock"`
-		Reservoir medtronic.Insulin `json:"reservoir"`
-		Status    Status            `json:"status"`
+		Battery   Battery   `json:"battery"`
+		Clock     time.Time `json:"clock"`
+		Reservoir Insulin   `json:"reservoir"`
+		Status    Status    `json:"status"`
 	}
 
 	Battery struct {
-		Voltage medtronic.Voltage `json:"voltage"`
+		Voltage Voltage `json:"voltage"`
 	}
 
 	Status struct {
@@ -67,19 +66,24 @@ type (
 	}
 
 	Treatment struct {
-		EventTime time.Time          `json:"eventTime"`
-		EventType string             `json:"eventType"`
-		EnteredBy string             `json:"enteredBy,omitempty"`
-		Glucose   *medtronic.Glucose `json:"glucose,omitempty"`
-		Absolute  *medtronic.Insulin `json:"absolute,omitempty"`
-		Duration  *int               `json:"duration,omitempty"` // minutes
-		Insulin   *medtronic.Insulin `json:"insulin,omitempty"`
+		EventTime time.Time `json:"eventTime"`
+		EventType string    `json:"eventType"`
+		EnteredBy string    `json:"enteredBy,omitempty"`
+		Glucose   *Glucose  `json:"glucose,omitempty"`
+		Absolute  *Insulin  `json:"absolute,omitempty"`
+		Duration  *int      `json:"duration,omitempty"` // minutes
+		Insulin   *Insulin  `json:"insulin,omitempty"`
 	}
 
 	// Structure used to unmarshal just the created_at field.
 	TreatmentTime struct {
 		CreatedAt time.Time `json:"created_at"`
 	}
+
+	// These correspond to types defined in the medtronic package.
+	Glucose int
+	Insulin float64
+	Voltage float64
 
 	Profile struct {
 		Id             string         `json:"_id"`
@@ -89,28 +93,30 @@ type (
 		Store          DefaultProfile `json:"store"`
 	}
 
+	// Structure used to unmarshal just the _id field.
+	ProfileId struct {
+		Id string `json:"_id"`
+	}
+
 	DefaultProfile struct {
 		Default ProfileData
 	}
 
 	ProfileData struct {
-		InsulinAction int         `json:"dia"` // hours
-		Basal         []TimeValue `json:"basal"`
-		CarbRatio     []TimeValue `json:"carbratio"`
-		Sens          []TimeValue `json:"sens"`
-		TargetLow     []TimeValue `json:"target_low"`
-		TargetHigh    []TimeValue `json:"target_high"`
-		TimeZone      string      `json:"timezone"`
-		Units         string      `json:"units"`
+		InsulinAction int      `json:"dia"` // hours
+		Basal         Schedule `json:"basal"`
+		CarbRatio     Schedule `json:"carbratio"`
+		Sens          Schedule `json:"sens"`
+		TargetLow     Schedule `json:"target_low"`
+		TargetHigh    Schedule `json:"target_high"`
+		TimeZone      string   `json:"timezone"`
+		Units         string   `json:"units"`
 	}
+
+	Schedule []TimeValue
 
 	TimeValue struct {
 		Time  string      `json:"time"`
 		Value interface{} `json:"value"`
-	}
-
-	// Structure used to unmarshal just the _id field.
-	ProfileId struct {
-		Id string `json:"_id"`
 	}
 )

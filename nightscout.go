@@ -94,7 +94,7 @@ func RestOperation(op string, api string, v interface{}) ([]byte, error) {
 	defer resp.Body.Close()
 	result, err := ioutil.ReadAll(resp.Body)
 	if verbose && err == nil {
-		log.Println(string(result))
+		log.Println(indentJson(result))
 	}
 	return result, err
 }
@@ -111,10 +111,7 @@ func Upload(op string, api string, param interface{}) error {
 	if op == "GET" {
 		log.Panicf("GET used for upload to %s", api)
 	}
-	data, err := RestOperation(op, api, param)
-	if verbose && err == nil {
-		log.Println(indentJson(data))
-	}
+	_, err := RestOperation(op, api, param)
 	return err
 }
 
