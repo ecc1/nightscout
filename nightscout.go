@@ -63,7 +63,7 @@ func RestOperation(op string, api string, v interface{}) ([]byte, error) {
 	if verbose || noUpload {
 		log.Printf("%s %v", op, u)
 		if v != nil {
-			log.Printf("%s", string(data))
+			log.Printf("%s", indentJson(data))
 		}
 	}
 	if noUpload && op != "GET" {

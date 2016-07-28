@@ -80,26 +80,17 @@ type (
 		CreatedAt time.Time `json:"created_at"`
 	}
 
-	// These correspond to types defined in the medtronic package.
-	Glucose int
-	Insulin float64
-	Voltage float64
-
 	Profile struct {
-		Id             string         `json:"_id"`
-		CreatedAt      time.Time      `json:"created_at"`
-		StartDate      time.Time      `json:"startDate"`
-		DefaultProfile string         `json:"defaultProfile"`
-		Store          DefaultProfile `json:"store"`
+		Id             string                 `json:"_id"`
+		CreatedAt      time.Time              `json:"created_at"`
+		StartDate      time.Time              `json:"startDate"`
+		DefaultProfile string                 `json:"defaultProfile"`
+		Store          map[string]ProfileData `json:"store"`
 	}
 
 	// Structure used to unmarshal just the _id field.
 	ProfileId struct {
 		Id string `json:"_id"`
-	}
-
-	DefaultProfile struct {
-		Default ProfileData
 	}
 
 	ProfileData struct {
@@ -119,4 +110,9 @@ type (
 		Time  string      `json:"time"`
 		Value interface{} `json:"value"`
 	}
+
+	// These correspond to types defined in the medtronic package.
+	Glucose int
+	Insulin float64
+	Voltage float64
 )
