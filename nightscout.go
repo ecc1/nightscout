@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/user"
 )
 
 const (
@@ -122,4 +123,20 @@ func indentJson(data []byte) string {
 		return err.Error()
 	}
 	return buf.String()
+}
+
+func Hostname() string {
+	h, err := os.Hostname()
+	if err != nil {
+		return "unknown"
+	}
+	return h
+}
+
+func Username() string {
+	u, err := user.Current()
+	if err != nil {
+		return "unknown"
+	}
+	return u.Username
 }
