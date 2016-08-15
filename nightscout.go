@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/user"
 )
 
 const (
@@ -134,9 +133,9 @@ func Hostname() string {
 }
 
 func Username() string {
-	u, err := user.Current()
-	if err != nil {
+	u := os.Getenv("USER")
+	if len(u) == 0 {
 		return "unknown"
 	}
-	return u.Username
+	return u
 }
