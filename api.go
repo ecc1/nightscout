@@ -17,16 +17,16 @@ type (
 		Date       int64   `json:"date"` // Unix time in milliseconds
 		DateString string  `json:"dateString"`
 		Device     string  `json:"device,omitempty"`
-		Sgv        uint16  `json:"sgv,omitempty"`
+		Sgv        int     `json:"sgv,omitempty"`
 		Direction  string  `json:"direction,omitempty"`
-		Filtered   uint32  `json:"filtered,omitempty"`
-		Unfiltered uint32  `json:"unfiltered,omitempty"`
-		Rssi       uint16  `json:"rssi,omitempty"`
-		Noise      uint16  `json:"noise,omitempty"`
+		Filtered   int     `json:"filtered,omitempty"`
+		Unfiltered int     `json:"unfiltered,omitempty"`
+		Rssi       int     `json:"rssi,omitempty"`
+		Noise      int     `json:"noise,omitempty"`
 		Slope      float64 `json:"slope,omitempty"`
 		Intercept  float64 `json:"intercept,omitempty"`
 		Scale      float64 `json:"scale,omitempty"`
-		Mbg        uint16  `json:"mbg,omitempty"`
+		Mbg        int     `json:"mbg,omitempty"`
 	}
 
 	// Struct used to unmarshal just the date field.
