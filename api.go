@@ -67,13 +67,14 @@ type (
 	}
 
 	Treatment struct {
-		EventTime time.Time `json:"eventTime"`
+		CreatedAt time.Time `json:"created_at"`
 		EventType string    `json:"eventType"`
 		EnteredBy string    `json:"enteredBy,omitempty"`
 		Glucose   *Glucose  `json:"glucose,omitempty"`
 		Absolute  *Insulin  `json:"absolute,omitempty"`
 		Duration  *int      `json:"duration,omitempty"` // minutes
 		Insulin   *Insulin  `json:"insulin,omitempty"`
+		Units     string    `json:"units,omitempty"`
 	}
 
 	// Structure used to unmarshal just the created_at field.
