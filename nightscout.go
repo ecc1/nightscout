@@ -94,7 +94,7 @@ func RestOperation(op string, api string, v interface{}) ([]byte, error) {
 	defer resp.Body.Close()
 	result, err := ioutil.ReadAll(resp.Body)
 	if verbose && err == nil {
-		log.Println(indentJson(result))
+		log.Print(indentJson(result))
 	}
 	return result, err
 }
@@ -138,4 +138,12 @@ func Username() string {
 		return "unknown"
 	}
 	return u
+}
+
+func Json(v interface{}) string {
+	data, err := json.Marshal(v)
+	if err != nil {
+		return err.Error()
+	}
+	return indentJson(data)
 }
