@@ -35,10 +35,11 @@ type (
 	}
 
 	DeviceStatus struct {
-		Device  string  `json:"device"`
-		Battery int     `json:"uploaderBattery,omitempty"`
-		Openaps Openaps `json:"openaps,omitempty"`
-		Pump    Pump    `json:"pump,omitempty"`
+		Device     string  `json:"device"`
+		RawBattery int     `json:"rawBattery,omitempty"`
+		Battery    int     `json:"uploaderBattery,omitempty"`
+		Openaps    Openaps `json:"openaps,omitempty"`
+		Pump       Pump    `json:"pump,omitempty"`
 	}
 
 	Openaps struct {
