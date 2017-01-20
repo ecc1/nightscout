@@ -35,11 +35,10 @@ type (
 	}
 
 	DeviceStatus struct {
-		Device     string  `json:"device"`
-		RawBattery int     `json:"rawBattery,omitempty"`
-		Battery    int     `json:"uploaderBattery,omitempty"`
-		Openaps    Openaps `json:"openaps,omitempty"`
-		Pump       Pump    `json:"pump,omitempty"`
+		Device   string   `json:"device"`
+		Openaps  Openaps  `json:"openaps,omitempty"`
+		Pump     Pump     `json:"pump,omitempty"`
+		Uploader Uploader `json:"uploader,omitempty"`
 	}
 
 	Openaps struct {
@@ -65,6 +64,12 @@ type (
 		Status    string `json:"status"`
 		Bolusing  bool   `json:"bolusing"`
 		Suspended bool   `json:"suspended"`
+	}
+
+	Uploader struct {
+		RawBattery     int     `json:"rawBattery,omitempty"`
+		BatteryLevel   int     `json:"battery,omitempty"`
+		BatteryVoltage Voltage `json:"batteryVoltage,omitempty"`
 	}
 
 	Treatment struct {
