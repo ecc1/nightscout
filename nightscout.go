@@ -53,7 +53,7 @@ func RestOperation(op string, api string, v interface{}) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	data := []byte{}
+	var data []byte
 	if v != nil {
 		data, err = json.Marshal(v)
 		if err != nil {
