@@ -102,14 +102,14 @@ type (
 	}
 
 	ProfileData struct {
-		InsulinAction int      `json:"dia"` // hours
-		Basal         Schedule `json:"basal"`
-		CarbRatio     Schedule `json:"carbratio"`
-		Sens          Schedule `json:"sens"`
-		TargetLow     Schedule `json:"target_low"`
-		TargetHigh    Schedule `json:"target_high"`
-		TimeZone      string   `json:"timezone"`
-		Units         string   `json:"units"`
+		DIA        int      `json:"dia"` // hours
+		Basal      Schedule `json:"basal"`
+		CarbRatio  Schedule `json:"carbratio"`
+		Sens       Schedule `json:"sens"`
+		TargetLow  Schedule `json:"target_low"`
+		TargetHigh Schedule `json:"target_high"`
+		TimeZone   string   `json:"timezone"`
+		Units      string   `json:"units"`
 	}
 
 	Schedule []TimeValue
