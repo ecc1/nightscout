@@ -67,9 +67,9 @@ type (
 	}
 
 	Uploader struct {
-		RawBattery     int     `json:"rawBattery,omitempty"`
-		BatteryLevel   int     `json:"battery,omitempty"`
+		BatteryLevel   int     `json:"battery"`
 		BatteryVoltage Voltage `json:"batteryVoltage,omitempty"`
+		RawBattery     int     `json:"rawBattery,omitempty"`
 	}
 
 	Treatment struct {
