@@ -22,11 +22,21 @@ var (
 	noUpload = false
 )
 
-func Verbose() bool        { return verbose }
-func SetVerbose(flag bool) { verbose = flag }
+func Verbose() bool {
+	return verbose
+}
 
-func NoUpload() bool        { return noUpload }
-func SetNoUpload(flag bool) { noUpload = flag }
+func SetVerbose(flag bool) {
+	verbose = flag
+}
+
+func NoUpload() bool {
+	return noUpload
+}
+
+func SetNoUpload(flag bool) {
+	noUpload = flag
+}
 
 func Site() (string, error) {
 	site := os.Getenv(siteEnvVar)
@@ -45,46 +55,12 @@ func ApiSecret() (string, error) {
 }
 
 func RestOperation(op string, api string, v interface{}) ([]byte, error) {
-	site, err := Site()
+	req, err := makeRequest(op, api, v)
 	if err != nil {
 		return nil, err
 	}
-	u, err := url.Parse(site + "/api/v1/" + api)
-	if err != nil {
-		return nil, err
-	}
-	var data []byte
-	if v != nil {
-		data, err = json.Marshal(v)
-		if err != nil {
-			return nil, err
-		}
-	}
-	if verbose || noUpload {
-		log.Printf("%s %v", op, u)
-		if v != nil {
-			log.Printf("%s", indentJson(data))
-		}
-	}
-	if noUpload && op != "GET" {
-		return []byte{'[', ']'}, nil
-	}
-	reader := io.Reader(nil)
-	if len(data) != 0 {
-		reader = bytes.NewReader(data)
-	}
-	req, err := http.NewRequest(op, u.String(), reader)
-	if err != nil {
-		return nil, err
-	}
-	secret, err := ApiSecret()
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Add("api-secret", secret)
-	req.Header.Add("accept", "application/json")
-	if len(data) != 0 {
-		req.Header.Add("content-type", "application/json")
+	if req == nil {
+		return []byte("[]"), nil
 	}
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -97,6 +73,69 @@ func RestOperation(op string, api string, v interface{}) ([]byte, error) {
 		log.Print(indentJson(result))
 	}
 	return result, err
+}
+
+func makeRequest(op string, api string, v interface{}) (*http.Request, error) {
+	u, err := makeURL(op, api)
+	if err != nil {
+		return nil, err
+	}
+	if verbose || noUpload {
+		log.Printf("%s %v", op, u)
+		if v != nil {
+			log.Print(Json(v))
+		}
+	}
+	if noUpload && op != "GET" {
+		return nil, nil
+	}
+	r, err := makeReader(v)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(op, u, r)
+	if err != nil {
+		return nil, err
+	}
+	err = addHeaders(req)
+	if err != nil {
+		return nil, err
+	}
+	return req, nil
+}
+
+func makeURL(op string, api string) (string, error) {
+	site, err := Site()
+	if err != nil {
+		return "", err
+	}
+	u, err := url.Parse(site + "/api/v1/" + api)
+	if err != nil {
+		return "", err
+	}
+	return u.String(), nil
+}
+
+func makeReader(v interface{}) (io.Reader, error) {
+	if v == nil {
+		return nil, nil
+	}
+	data, err := json.Marshal(v)
+	if err != nil {
+		return nil, err
+	}
+	return bytes.NewReader(data), nil
+}
+
+func addHeaders(req *http.Request) error {
+	secret, err := ApiSecret()
+	if err != nil {
+		return err
+	}
+	req.Header.Add("api-secret", secret)
+	req.Header.Add("accept", "application/json")
+	req.Header.Add("content-type", "application/json")
+	return nil
 }
 
 func Get(api string, result interface{}) error {
