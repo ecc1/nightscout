@@ -7,12 +7,15 @@ import (
 	"time"
 )
 
-type Interval struct {
+// Gap represents a gap.
+type Gap struct {
 	Start  time.Time
 	Finish time.Time
 }
 
-func Gaps(since time.Time, gapDuration time.Duration) ([]Interval, error) {
+// Gaps finds gaps in Nightscout entries since the given time
+// that are longer than the specified duration.
+func Gaps(since time.Time, gapDuration time.Duration) ([]Gap, error) {
 	now := time.Now()
 	window := now.Sub(since)
 	log.Printf("retrieving Nightscout records from last %v", window)
@@ -46,8 +49,8 @@ func Gaps(since time.Time, gapDuration time.Duration) ([]Interval, error) {
 	return findGaps(times, gapDuration), nil
 }
 
-func findGaps(entries []time.Time, gapDuration time.Duration) []Interval {
-	var gaps []Interval
+func findGaps(entries []time.Time, gapDuration time.Duration) []Gap {
+	var gaps []Gap
 	for i := 0; i < len(entries)-1; i++ {
 		cur := entries[i]
 		prev := entries[i+1]
@@ -56,15 +59,23 @@ func findGaps(entries []time.Time, gapDuration time.Duration) []Interval {
 		}
 		delta := cur.Sub(prev)
 		if delta >= gapDuration {
-			gaps = append(gaps, Interval{Start: prev, Finish: cur})
+			gaps = append(gaps, Gap{Start: prev, Finish: cur})
 		}
 	}
 	return gaps
 }
 
-// Implement sort.Interface for reverse chronological order.
+// mostRecentFirst implements sort.Interface for reverse chronological order.
 type mostRecentFirst []EntryTime
 
-func (v mostRecentFirst) Len() int           { return len(v) }
-func (v mostRecentFirst) Swap(i, j int)      { v[i], v[j] = v[j], v[i] }
-func (v mostRecentFirst) Less(i, j int) bool { return v[i].Date > v[j].Date }
+func (v mostRecentFirst) Len() int {
+	return len(v)
+}
+
+func (v mostRecentFirst) Swap(i, j int) {
+	v[i], v[j] = v[j], v[i]
+}
+
+func (v mostRecentFirst) Less(i, j int) bool {
+	return v[i].Date > v[j].Date
+}

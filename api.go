@@ -8,10 +8,12 @@ import (
 // Nightscout upload API in https://github.com/nightscout/cgm-remote-monitor
 
 const (
-	DateStringLayout = "2006-01-02T15:04:05.000-0700"
+	// DateStringLayout is a time format accepted by Nightscout.
+	DateStringLayout = time.RFC3339
 )
 
 type (
+	// Entry represents data for the Nightscout entries API.
 	Entry struct {
 		Type       string  `json:"type"`
 		Date       int64   `json:"date"` // Unix time in milliseconds
@@ -29,11 +31,12 @@ type (
 		MBG        int     `json:"mbg,omitempty"`
 	}
 
-	// Struct used to unmarshal just the date field.
+	// EntryTime is used to unmarshal just the Date field of an Entry.
 	EntryTime struct {
 		Date int64 `json:"date"` // Unix time in milliseconds
 	}
 
+	// DeviceStatus represents data for the Nightscout devicestatus API.
 	DeviceStatus struct {
 		Device   string   `json:"device"`
 		Openaps  Openaps  `json:"openaps,omitempty"`
@@ -41,14 +44,17 @@ type (
 		Uploader Uploader `json:"uploader,omitempty"`
 	}
 
+	// Openaps represents the openaps data in a DeviceStatus record.
 	Openaps struct {
 		Iob Iob `json:"iob"`
 	}
 
+	// Iob represents the insulin-on-board data in an Openaps record.
 	Iob struct {
 		Iob Insulin `json:"iob"`
 	}
 
+	// Pump represents the pump data in a DeviceStatus record.
 	Pump struct {
 		Battery   Battery   `json:"battery"`
 		Clock     time.Time `json:"clock"`
@@ -56,22 +62,26 @@ type (
 		Status    Status    `json:"status"`
 	}
 
+	// Battery represents the battery data in a Pump record.
 	Battery struct {
 		Voltage Voltage `json:"voltage"`
 	}
 
+	// Status represents the status data in a Pump record.
 	Status struct {
 		Status    string `json:"status"`
 		Bolusing  bool   `json:"bolusing"`
 		Suspended bool   `json:"suspended"`
 	}
 
+	// Uploader represents the uploader data in a DeviceStatus record.
 	Uploader struct {
 		BatteryLevel   int     `json:"battery"`
 		BatteryVoltage Voltage `json:"batteryVoltage,omitempty"`
 		RawBattery     int     `json:"rawBattery,omitempty"`
 	}
 
+	// Treatment represents data for the Nightscout treatments API.
 	Treatment struct {
 		CreatedAt time.Time `json:"created_at"`
 		EventType string    `json:"eventType"`
@@ -83,24 +93,26 @@ type (
 		Units     string    `json:"units,omitempty"`
 	}
 
-	// Structure used to unmarshal just the created_at field.
+	// TreatmentTime is used to unmarshal just the CreatedAt field of a Treatment.
 	TreatmentTime struct {
 		CreatedAt time.Time `json:"created_at"`
 	}
 
+	// Profile represents data for the Nightscout profile API.
 	Profile struct {
-		Id             string                 `json:"_id"`
+		ID             string                 `json:"_id"`
 		CreatedAt      time.Time              `json:"created_at"`
 		StartDate      time.Time              `json:"startDate"`
 		DefaultProfile string                 `json:"defaultProfile"`
 		Store          map[string]ProfileData `json:"store"`
 	}
 
-	// Structure used to unmarshal just the _id field.
-	ProfileId struct {
-		Id string `json:"_id"`
+	// ProfileID is used to unmarshal just the ID field of a Profile.
+	ProfileID struct {
+		ID string `json:"_id"`
 	}
 
+	// ProfileData represents the information in a Profile record.
 	ProfileData struct {
 		DIA        int      `json:"dia"` // hours
 		Basal      Schedule `json:"basal"`
@@ -112,15 +124,22 @@ type (
 		Units      string   `json:"units"`
 	}
 
+	// Schedule represents a sequence of times and values.
 	Schedule []TimeValue
 
+	// TimeValue represents a value with an associated time.
 	TimeValue struct {
 		Time  string      `json:"time"`
 		Value interface{} `json:"value"`
 	}
 
-	// These correspond to types defined in the medtronic package.
+	// The following types are defined here to avoid
+	// a circular dependency with the medtronic package.
+
+	// Glucose corresponds to the medtronic.Glucose type.
 	Glucose int
+	// Insulin corresponds to the medtronic.Insulin type.
 	Insulin float64
+	// Voltage corresponds to the medtronic.Voltage type.
 	Voltage float64
 )

@@ -22,23 +22,27 @@ var (
 	noUpload = false
 )
 
+// Verbose returns the value of the verbose flag.
 func Verbose() bool {
 	return verbose
 }
 
+// SetVerbose sets the value of the verbose flag.
 func SetVerbose(flag bool) {
 	verbose = flag
 }
 
+// NoUpload returns the value of the noUpload flag.
 func NoUpload() bool {
 	return noUpload
 }
 
+// SetNoUpload sets the value of the noUpload flag.
 func SetNoUpload(flag bool) {
 	noUpload = flag
 }
 
-func Site() (string, error) {
+func sitename() (string, error) {
 	site := os.Getenv(siteEnvVar)
 	if len(site) == 0 {
 		return "", fmt.Errorf("%s is not set", siteEnvVar)
@@ -46,7 +50,7 @@ func Site() (string, error) {
 	return site, nil
 }
 
-func ApiSecret() (string, error) {
+func apiSecret() (string, error) {
 	secret := os.Getenv(apiSecretEnvVar)
 	if len(secret) == 0 {
 		return "", fmt.Errorf("%s is not set", apiSecretEnvVar)
@@ -54,7 +58,12 @@ func ApiSecret() (string, error) {
 	return secret, nil
 }
 
+// RestOperation performs an operation on a Nightscout API,
+// with optional JSON data, and returns the result.
 func RestOperation(op string, api string, v interface{}) ([]byte, error) {
+	if op == "GET" && v != nil {
+		log.Panicf("GET %s operation with data", api)
+	}
 	req, err := makeRequest(op, api, v)
 	if err != nil {
 		return nil, err
@@ -67,10 +76,10 @@ func RestOperation(op string, api string, v interface{}) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 	result, err := ioutil.ReadAll(resp.Body)
+	_ = resp.Body.Close()
 	if verbose && err == nil {
-		log.Print(indentJson(result))
+		log.Print(indentJSON(result))
 	}
 	return result, err
 }
@@ -83,7 +92,7 @@ func makeRequest(op string, api string, v interface{}) (*http.Request, error) {
 	if verbose || noUpload {
 		log.Printf("%s %v", op, u)
 		if v != nil {
-			log.Print(Json(v))
+			log.Print(JSON(v))
 		}
 	}
 	if noUpload && op != "GET" {
@@ -105,7 +114,7 @@ func makeRequest(op string, api string, v interface{}) (*http.Request, error) {
 }
 
 func makeURL(op string, api string) (string, error) {
-	site, err := Site()
+	site, err := sitename()
 	if err != nil {
 		return "", err
 	}
@@ -128,7 +137,7 @@ func makeReader(v interface{}) (io.Reader, error) {
 }
 
 func addHeaders(req *http.Request) error {
-	secret, err := ApiSecret()
+	secret, err := apiSecret()
 	if err != nil {
 		return err
 	}
@@ -138,6 +147,7 @@ func addHeaders(req *http.Request) error {
 	return nil
 }
 
+// Get performs a GET operation on a Nightscout API.
 func Get(api string, result interface{}) error {
 	data, err := RestOperation("GET", api, nil)
 	if err != nil {
@@ -146,23 +156,31 @@ func Get(api string, result interface{}) error {
 	return json.Unmarshal(data, result)
 }
 
+// Upload performs a POST or PUT operation on a Nightscout API.
 func Upload(op string, api string, param interface{}) error {
-	if op == "GET" {
-		log.Panicf("GET used for upload to %s", api)
+	switch op {
+	case "POST", "PUT":
+		if param == nil {
+			log.Panicf("%s %s operation with no data", op, api)
+		}
+	default:
+		log.Panicf("%s %s used for upload", op, api)
 	}
 	_, err := RestOperation(op, api, param)
 	return err
 }
 
-func indentJson(data []byte) string {
+func indentJSON(data []byte) string {
 	buf := bytes.Buffer{}
 	err := json.Indent(&buf, data, "", "  ")
 	if err != nil {
-		return err.Error()
+		log.Printf("json.Indent error: %v", err)
+		return string(data)
 	}
 	return buf.String()
 }
 
+// Hostname returns the host name.
 func Hostname() string {
 	h, err := os.Hostname()
 	if err != nil {
@@ -171,6 +189,7 @@ func Hostname() string {
 	return h
 }
 
+// Username returns the user name.
 func Username() string {
 	u := os.Getenv("USER")
 	if len(u) == 0 {
@@ -179,10 +198,12 @@ func Username() string {
 	return u
 }
 
-func Json(v interface{}) string {
+// JSON marshals the given data in indented form
+// and returns it as a string.
+func JSON(v interface{}) string {
 	data, err := json.Marshal(v)
 	if err != nil {
 		return err.Error()
 	}
-	return indentJson(data)
+	return indentJSON(data)
 }
