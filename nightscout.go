@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 )
 
 const (
@@ -118,11 +119,15 @@ func makeURL(op string, api string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	u, err := url.Parse(site + "/api/v1/" + api)
+	siteURL, err := url.Parse(site)
 	if err != nil {
 		return "", err
 	}
-	return u.String(), nil
+	u, err := url.Parse(path.Join("api", "v1", api))
+	if err != nil {
+		return "", err
+	}
+	return siteURL.ResolveReference(u).String(), nil
 }
 
 func makeReader(v interface{}) (io.Reader, error) {
