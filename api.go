@@ -31,10 +31,8 @@ type (
 		MBG        int     `json:"mbg,omitempty"`
 	}
 
-	// EntryTime is used to unmarshal just the Date field of an Entry.
-	EntryTime struct {
-		Date int64 `json:"date"` // Unix time in milliseconds
-	}
+	// Entries represents a sequence of Entry values.
+	Entries []Entry
 
 	// DeviceStatus represents data for the Nightscout devicestatus API.
 	DeviceStatus struct {
@@ -142,4 +140,11 @@ type (
 	Insulin float64
 	// Voltage corresponds to the medtronic.Voltage type.
 	Voltage float64
+)
+
+// Values for the Entry Type field.
+const (
+	SGVType = "sgv"
+	MBGType = "mbg"
+	CalType = "cal"
 )

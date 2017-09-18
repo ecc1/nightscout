@@ -9,7 +9,7 @@ import (
 
 func main() {
 	nightscout.SetVerbose(true)
-	var entries []nightscout.Entry
+	var entries nightscout.Entries
 	err := nightscout.Get("entries", &entries)
 	if err != nil {
 		log.Fatal(err)
