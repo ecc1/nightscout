@@ -23,7 +23,7 @@ func Gaps(since time.Time, gapDuration time.Duration) ([]Gap, error) {
 	// 2 entries per minute should be plenty.
 	count := 2 * int(window/time.Minute)
 	rest := fmt.Sprintf("entries.json?find[dateString][$gte]=%s&count=%d", dateString, count)
-	var entries []EntryTime
+	var entries mostRecentFirst
 	// Suppress verbose output for this.
 	v := Verbose()
 	SetVerbose(false)
@@ -34,14 +34,12 @@ func Gaps(since time.Time, gapDuration time.Duration) ([]Gap, error) {
 	}
 	// Sort entries in reverse chronological order,
 	// even though they're currently already returned that way.
-	sort.Sort(mostRecentFirst(entries))
+	sort.Sort(entries)
 	// Use current time to end any ongoing gap.
 	times := []time.Time{now}
-	// Convert millisecond Date field to Unix time.
-	for _, r := range entries {
-		sec := r.Date / 1000
-		nsec := (r.Date % 1000) * 1000000
-		times = append(times, time.Unix(sec, nsec))
+	// Convert Date fields to time.Time values.
+	for _, e := range entries {
+		times = append(times, e.Time())
 	}
 	// Use cutoff time to precede any ongoing gap.
 	times = append(times, since)
@@ -65,17 +63,36 @@ func findGaps(entries []time.Time, gapDuration time.Duration) []Gap {
 	return gaps
 }
 
-// mostRecentFirst implements sort.Interface for reverse chronological order.
-type mostRecentFirst []EntryTime
+const (
+	edgeMargin = 1 * time.Minute
+)
 
-func (v mostRecentFirst) Len() int {
-	return len(v)
-}
-
-func (v mostRecentFirst) Swap(i, j int) {
-	v[i], v[j] = v[j], v[i]
-}
-
-func (v mostRecentFirst) Less(i, j int) bool {
-	return v[i].Date > v[j].Date
+// Missing returns the Entry values that fall within the given gaps.
+func Missing(entries Entries, gaps []Gap) Entries {
+	var missing Entries
+	i := 0
+	for _, g := range gaps {
+		// Skip over entries that lie outside the gap.
+		for i < len(entries) {
+			t := entries[i].Time()
+			if t.Before(g.Finish) {
+				break
+			}
+			i++
+		}
+		// Add entries that fall within the gap
+		// (by a margin of at least edgeMargin to avoid duplicates).
+		for i < len(entries) {
+			e := entries[i]
+			t := e.Time()
+			if t.Before(g.Start) {
+				break
+			}
+			if t.Sub(g.Start) >= edgeMargin && g.Finish.Sub(t) >= edgeMargin {
+				missing = append(missing, e)
+			}
+			i++
+		}
+	}
+	return missing
 }
