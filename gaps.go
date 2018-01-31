@@ -68,6 +68,7 @@ const (
 )
 
 // Missing returns the Entry values that fall within the given gaps.
+// Entries must be in reverse chronological order.
 func Missing(entries Entries, gaps []Gap) Entries {
 	var missing Entries
 	i := 0
