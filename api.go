@@ -44,12 +44,12 @@ type (
 
 	// Openaps represents the openaps data in a DeviceStatus record.
 	Openaps struct {
-		Iob Iob `json:"iob"`
+		IOB IOB `json:"iob"`
 	}
 
-	// Iob represents the insulin-on-board data in an Openaps record.
-	Iob struct {
-		Iob Insulin `json:"iob"`
+	// IOB represents the insulin-on-board data in an Openaps record.
+	IOB struct {
+		IOB Insulin `json:"iob"`
 	}
 
 	// Pump represents the pump data in a DeviceStatus record.
