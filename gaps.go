@@ -23,7 +23,7 @@ func Gaps(since time.Time, gapDuration time.Duration) ([]Gap, error) {
 	// 2 entries per minute should be plenty.
 	count := 2 * int(window/time.Minute)
 	rest := fmt.Sprintf("entries.json?find[dateString][$gte]=%s&count=%d", dateString, count)
-	var entries mostRecentFirst
+	var entries EntryTimes
 	// Suppress verbose output for this.
 	v := Verbose()
 	SetVerbose(false)

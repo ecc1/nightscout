@@ -25,22 +25,26 @@ func Date(t time.Time) int64 {
 	return t.UnixNano() / 1000000
 }
 
-// EntryTime is used to unmarshal just the Date field of an Entry.
-type EntryTime struct {
-	Date int64 `json:"date"` // Unix time in milliseconds
-}
+type (
+	// EntryTime is used to unmarshal just the Date field of an Entry.
+	EntryTime struct {
+		Date int64 `json:"date"` // Unix time in milliseconds
+	}
 
-// mostRecentFirst implements sort.Interface for reverse chronological order.
-type mostRecentFirst []EntryTime
+	// EntryTimes represents a sequence of entry times.
+	EntryTimes []EntryTime
+)
 
-func (v mostRecentFirst) Len() int {
+// Implement sort.Interface for reverse chronological order.
+
+func (v EntryTimes) Len() int {
 	return len(v)
 }
 
-func (v mostRecentFirst) Swap(i, j int) {
+func (v EntryTimes) Swap(i, j int) {
 	v[i], v[j] = v[j], v[i]
 }
 
-func (v mostRecentFirst) Less(i, j int) bool {
+func (v EntryTimes) Less(i, j int) bool {
 	return v[i].Date > v[j].Date
 }
