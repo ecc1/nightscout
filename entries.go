@@ -9,6 +9,7 @@ import (
 )
 
 // Chronological implements sort.Interface for chronological order.
+// If date fields are the same, compare type fields.
 type Chronological Entries
 
 func (v Chronological) Len() int {
@@ -19,8 +20,14 @@ func (v Chronological) Swap(i, j int) {
 	v[i], v[j] = v[j], v[i]
 }
 
+// Before returns true if x precedes y chronologically,
+// using the Type field to break ties.
+func (x Entry) Before(y Entry) bool {
+	return x.Date < y.Date || (x.Date == y.Date && x.Type < y.Type)
+}
+
 func (v Chronological) Less(i, j int) bool {
-	return v[i].Date < v[j].Date
+	return v[i].Before(v[j])
 }
 
 // Sort returns a copy of the entries in chronological order.
@@ -50,32 +57,38 @@ func (e Entries) TrimAfter(cutoff time.Time) Entries {
 }
 
 // MergeEntries merges entries that are already in chronological order.
+// Duplicates are removed.
 func MergeEntries(u, v Entries) Entries {
 	m := make(Entries, 0, len(u)+len(v))
+	prev := Entry{Date: -1, Type: "invalid"}
 	i := 0
 	j := 0
-	for {
-		if i == len(u) {
-			m = append(m, v[j:]...)
-			break
-		}
-		if j == len(v) {
-			m = append(m, u[i:]...)
-			break
-		}
-		if u[i].Date < v[j].Date {
-			m = append(m, u[i])
+	for i < len(u) || j < len(v) {
+		if j == len(v) || (i < len(u) && u[i].Before(v[j])) {
+			if u[i] != prev {
+				m = append(m, u[i])
+				prev = u[i]
+			}
 			i++
 			continue
 		}
-		if v[j].Date < u[i].Date {
-			m = append(m, v[j])
+		if i == len(u) || (j < len(v) && v[j].Before(u[i])) {
+			if v[j] != prev {
+				m = append(m, v[j])
+				prev = v[j]
+			}
 			j++
 			continue
 		}
-		m = append(m, u[i])
+		if u[i] != prev {
+			m = append(m, u[i])
+			prev = u[i]
+		}
 		i++
-		m = append(m, v[j])
+		if v[j] != prev {
+			m = append(m, v[j])
+			prev = v[j]
+		}
 		j++
 	}
 	return m

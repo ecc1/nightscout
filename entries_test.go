@@ -20,6 +20,7 @@ var (
 		{Date: 8},
 		{Date: 9}}
 
+	dups  = append(D, D...).Sort()
 	evens = Entries{D[0], D[2], D[4], D[6], D[8]}
 	odds  = Entries{D[1], D[3], D[5], D[7], D[9]}
 )
@@ -82,6 +83,11 @@ func TestMergeEntries(t *testing.T) {
 		{D[:0], D[:0], D[:0]},
 		{D, nil, D},
 		{nil, D, D},
+		{D, D, D},
+		{dups, nil, D},
+		{dups, D, D},
+		{nil, dups, D},
+		{D, dups, D},
 		{D[:1], D[1:], D},
 		{D[1:], D[:1], D},
 		{D[:5], D[5:], D},
