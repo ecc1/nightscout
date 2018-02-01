@@ -5,39 +5,60 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
 )
 
 var (
-	D = Entries{
-		{Date: 0},
-		{Date: 1},
-		{Date: 2},
-		{Date: 3},
-		{Date: 4},
-		{Date: 5},
-		{Date: 6},
-		{Date: 7},
-		{Date: 8},
-		{Date: 9}}
-
-	dups  = append(D, D...).Sort()
-	evens = Entries{D[0], D[2], D[4], D[6], D[8]}
-	odds  = Entries{D[1], D[3], D[5], D[7], D[9]}
+	dups  = append(E, E...).sorted()
+	evens = E.skipping(1)
+	odds  = E[1:].skipping(1)
 )
 
-type P Entries
+func (e Entries) sorted() Entries {
+	v := make(Entries, len(e))
+	copy(v, e)
+	v.Sort()
+	return v
+}
 
-func (v P) String() string {
-	if len(v) == 0 {
+func (e Entries) reversed() Entries {
+	v := make(Entries, len(e))
+	for i, x := range e {
+		v[len(e)-i-1] = x
+	}
+	return v
+}
+
+func (e Entries) skipping(n int) Entries {
+	v := make(Entries, 0, len(e)/(n+1))
+	for i := 0; i < len(e); i += n {
+		v = append(v, e[i])
+	}
+	return v
+}
+
+// Custom String method for printing entries.
+func (e Entries) String() string {
+	if len(e) == 0 {
 		return "[]"
 	}
 	var buf bytes.Buffer
-	buf.WriteString(fmt.Sprintf("[%d", v[0].Date))
-	for i := 1; i < len(v); i++ {
-		buf.WriteString(fmt.Sprintf(" %d", v[i].Date))
+	buf.WriteString(fmt.Sprintf("[%s", entryName(e[0])))
+	for _, x := range e[1:] {
+		buf.WriteString(fmt.Sprintf(" %s", entryName(x)))
 	}
 	buf.WriteString("]")
 	return buf.String()
+}
+
+// Use a symbolic name if e is an element of E, otherwise use its date.
+func entryName(e Entry) string {
+	for i, x := range E {
+		if x == e {
+			return fmt.Sprintf("E%d", i)
+		}
+	}
+	return e.String()
 }
 
 func TestSortEntries(t *testing.T) {
@@ -45,32 +66,39 @@ func TestSortEntries(t *testing.T) {
 		unsorted Entries
 		sorted   Entries
 	}{
-		{D, D},
-		{D[:0], D[:0]},
-		{D[0:1], D[0:1]},
-		{Entries{D[3], D[2], D[1]}, D[1:4]},
+		{E, E},
+		{E[:0], E[:0]},
+		{E[0:1], E[0:1]},
+		{Entries{E[3], E[2], E[1]}, E[1:4]},
+		{E.reversed(), E},
 	}
 	for _, c := range cases {
-		v := c.unsorted.Sort()
+		// Make a copy since sorting is done in place.
+		v := make(Entries, len(c.unsorted))
+		copy(v, c.unsorted)
+		v.Sort()
 		if !reflect.DeepEqual(v, c.sorted) {
-			t.Errorf("Sort(%v) == %v, want %v", P(c.unsorted), P(v), P(c.sorted))
+			t.Errorf("Sort(%v) == %v, want %v", c.unsorted, v, c.sorted)
 		}
 	}
 }
 
-func TestSortReverseEntries(t *testing.T) {
+func TestTrimEntries(t *testing.T) {
 	cases := []struct {
-		unsorted Entries
-		sorted   Entries
+		untrimmed Entries
+		cutoff    time.Time
+		trimmed   Entries
 	}{
-		{D[:0], D[:0]},
-		{D[0:1], D[0:1]},
-		{D[1:4], Entries{D[3], D[2], D[1]}},
+		{E, parseTime("2017-09-30 23:59:59"), E},
+		{E, parseTime("2017-10-01 00:00:00"), E[:19]},
+		{E, parseTime("2017-10-01 01:00:00"), E[:7]},
+		{E, parseTime("2017-10-01 01:20:00"), E[:3]},
+		{E, parseTime("2017-10-01 01:35:00"), E[:0]},
 	}
 	for _, c := range cases {
-		v := c.unsorted.SortReverse()
-		if !reflect.DeepEqual(v, c.sorted) {
-			t.Errorf("SortReverse(%v) == %v, want %v", P(c.unsorted), P(v), P(c.sorted))
+		v := c.untrimmed.TrimAfter(c.cutoff)
+		if !reflect.DeepEqual(v, c.trimmed) {
+			t.Errorf("TrimAfter(%v, %v) == %v, want %v", c.untrimmed, c.cutoff, v, c.trimmed)
 		}
 	}
 }
@@ -80,28 +108,27 @@ func TestMergeEntries(t *testing.T) {
 		a, b   Entries
 		merged Entries
 	}{
-		{D[:0], D[:0], D[:0]},
-		{D, nil, D},
-		{nil, D, D},
-		{D, D, D},
-		{dups, nil, D},
-		{dups, D, D},
-		{nil, dups, D},
-		{D, dups, D},
-		{D[:1], D[1:], D},
-		{D[1:], D[:1], D},
-		{D[:5], D[5:], D},
-		{D[5:], D[:5], D},
-		{D[:9], D[9:], D},
-		{D[9:], D[:9], D},
-		{evens, odds, D},
-		{odds, evens, D},
+		{E[:0], E[:0], E[:0]},
+		{E, nil, E},
+		{nil, E, E},
+		{E, E, E},
+		{dups, nil, E},
+		{dups, E, E},
+		{nil, dups, E},
+		{E, dups, E},
+		{E[:1], E[1:], E},
+		{E[1:], E[:1], E},
+		{E[:5], E[5:], E},
+		{E[5:], E[:5], E},
+		{E[:9], E[9:], E},
+		{E[9:], E[:9], E},
+		{evens, odds, E},
+		{odds, evens, E},
 	}
 	for _, c := range cases {
-		// Make a copy since sorting is done in place.
 		v := MergeEntries(c.a, c.b)
 		if !reflect.DeepEqual(v, c.merged) {
-			t.Errorf("MergeEntries(%v, %v) == %v, want %v", P(c.a), P(c.b), P(v), P(c.merged))
+			t.Errorf("MergeEntries(%v, %v) == %v, want %v", c.a, c.b, v, c.merged)
 		}
 	}
 }
