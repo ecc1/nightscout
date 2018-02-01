@@ -6,39 +6,67 @@ import (
 	"time"
 )
 
+const (
+	gapDuration = 7 * time.Minute
+
+	TestTimeLayout = "2006-01-02 15:04:05"
+)
+
 func parseTime(s string) time.Time {
-	const layout = "2006-01-02 15:04:05"
-	t, err := time.ParseInLocation(layout, s, time.Local)
+	t, err := time.ParseInLocation(TestTimeLayout, s, time.Local)
 	if err != nil {
 		panic(err)
 	}
 	return t
 }
 
-const (
-	numEntries    = 20
-	entryInterval = 5 * time.Minute
-	gapDuration   = 7 * time.Minute
-)
-
 var (
-	T = make([]time.Time, numEntries)
-	E = make(Entries, numEntries)
-)
-
-// Construct Entry and Time values in reverse chronological order.
-func makeEntries() {
-	t := parseTime("2017-10-01 01:00:00")
-	for n := 0; n < numEntries; n++ {
-		t = t.Add(-entryInterval)
-		T[n] = t
-		E[n].Date = Date(t)
+	T = []time.Time{
+		parseTime("2017-10-01 01:35:00"),
+		parseTime("2017-10-01 01:30:00"),
+		parseTime("2017-10-01 01:25:00"),
+		parseTime("2017-10-01 01:20:00"),
+		parseTime("2017-10-01 01:15:00"),
+		parseTime("2017-10-01 01:10:00"),
+		parseTime("2017-10-01 01:05:00"),
+		parseTime("2017-10-01 01:00:00"),
+		parseTime("2017-10-01 00:55:00"),
+		parseTime("2017-10-01 00:50:00"),
+		parseTime("2017-10-01 00:45:00"),
+		parseTime("2017-10-01 00:40:00"),
+		parseTime("2017-10-01 00:35:00"),
+		parseTime("2017-10-01 00:30:00"),
+		parseTime("2017-10-01 00:25:00"),
+		parseTime("2017-10-01 00:20:00"),
+		parseTime("2017-10-01 00:15:00"),
+		parseTime("2017-10-01 00:10:00"),
+		parseTime("2017-10-01 00:05:00"),
+		parseTime("2017-10-01 00:00:00"),
 	}
-}
 
-func init() {
-	makeEntries()
-}
+	E = Entries{
+		{Date: Date(T[0])},
+		{Date: Date(T[1])},
+		{Date: Date(T[2])},
+		{Date: Date(T[3])},
+		{Date: Date(T[4])},
+		{Date: Date(T[5])},
+		{Date: Date(T[6])},
+		{Date: Date(T[7])},
+		{Date: Date(T[8])},
+		{Date: Date(T[9])},
+		{Date: Date(T[10])},
+		{Date: Date(T[11])},
+		{Date: Date(T[12])},
+		{Date: Date(T[13])},
+		{Date: Date(T[14])},
+		{Date: Date(T[15])},
+		{Date: Date(T[16])},
+		{Date: Date(T[17])},
+		{Date: Date(T[18])},
+		{Date: Date(T[19])},
+	}
+)
 
 func (e Entry) String() string {
 	return e.Time().Format("3:04")
