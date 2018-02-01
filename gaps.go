@@ -19,10 +19,12 @@ func Gaps(since time.Time, gapDuration time.Duration) ([]Gap, error) {
 	now := time.Now()
 	window := now.Sub(since)
 	log.Printf("retrieving Nightscout records from last %v", window)
-	dateString := since.Format(DateStringLayout)
+	dateParam := fmt.Sprintf("find[dateString][$gte]=%s", since.Format(DateStringLayout))
+	// Consider only entries uploaded by this device.
+	deviceParam := fmt.Sprintf("find[device]=%s", Device())
 	// 2 entries per minute should be plenty.
-	count := 2 * int(window/time.Minute)
-	rest := fmt.Sprintf("entries.json?find[dateString][$gte]=%s&count=%d", dateString, count)
+	countParam := fmt.Sprintf("count=%d", 2*int(window/time.Minute))
+	rest := fmt.Sprintf("entries.json?%s&%s&%s", dateParam, deviceParam, countParam)
 	var entries EntryTimes
 	// Suppress verbose output for this.
 	v := Verbose()
