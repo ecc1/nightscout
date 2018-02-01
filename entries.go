@@ -8,55 +8,43 @@ import (
 	"time"
 )
 
-// Chronological implements sort.Interface for chronological order.
+// Implement sort.Interface for reverse chronological order.
 // If date fields are the same, compare type fields.
-type Chronological Entries
 
-func (v Chronological) Len() int {
-	return len(v)
+func (e Entries) Len() int {
+	return len(e)
 }
 
-func (v Chronological) Swap(i, j int) {
-	v[i], v[j] = v[j], v[i]
+func (e Entries) Swap(i, j int) {
+	e[i], e[j] = e[j], e[i]
 }
 
-// Before returns true if x precedes y chronologically,
+// After returns true if x comes after y chronologically,
 // using the Type field to break ties.
-func (x Entry) Before(y Entry) bool {
-	return x.Date < y.Date || (x.Date == y.Date && x.Type < y.Type)
+func (x Entry) After(y Entry) bool {
+	return x.Date > y.Date || (x.Date == y.Date && x.Type > y.Type)
 }
 
-func (v Chronological) Less(i, j int) bool {
-	return v[i].Before(v[j])
+func (e Entries) Less(i, j int) bool {
+	return e[i].After(e[j])
 }
 
-// Sort returns a copy of the entries in chronological order.
-func (e Entries) Sort() Entries {
-	v := make(Entries, len(e))
-	copy(v, e)
-	sort.Sort(Chronological(v))
-	return v
-}
-
-// SortReverse returns a copy of the entries in reverse chronological order.
-func (e Entries) SortReverse() Entries {
-	v := make(Entries, len(e))
-	copy(v, e)
-	sort.Sort(sort.Reverse(Chronological(v)))
-	return v
+// Sort sorts the entries into reverse chronological order, in place.
+func (e Entries) Sort() {
+	sort.Sort(e)
 }
 
 // TrimAfter returns the entries that are more recent than the specified time.
-// The entries must be in chronological order.
+// The entries must be in reverse chronological order.
 func (e Entries) TrimAfter(cutoff time.Time) Entries {
 	d := Date(cutoff)
 	n := sort.Search(len(e), func(i int) bool {
-		return e[i].Date > d
+		return e[i].Date <= d
 	})
-	return e[n:]
+	return e[:n]
 }
 
-// MergeEntries merges entries that are already in chronological order.
+// MergeEntries merges entries that are already in reverse chronological order.
 // Duplicates are removed.
 func MergeEntries(u, v Entries) Entries {
 	m := make(Entries, 0, len(u)+len(v))
@@ -64,7 +52,7 @@ func MergeEntries(u, v Entries) Entries {
 	i := 0
 	j := 0
 	for i < len(u) || j < len(v) {
-		if j == len(v) || (i < len(u) && u[i].Before(v[j])) {
+		if j == len(v) || (i < len(u) && u[i].After(v[j])) {
 			if u[i] != prev {
 				m = append(m, u[i])
 				prev = u[i]
@@ -72,7 +60,7 @@ func MergeEntries(u, v Entries) Entries {
 			i++
 			continue
 		}
-		if i == len(u) || (j < len(v) && v[j].Before(u[i])) {
+		if i == len(u) || (j < len(v) && v[j].After(u[i])) {
 			if v[j] != prev {
 				m = append(m, v[j])
 				prev = v[j]
@@ -106,13 +94,8 @@ func (e Entries) Print() {
 	_ = e.Write(os.Stdout)
 }
 
-// Save writes entries in JSON format to a file,
-// which is first renamed with a "~" suffix.
+// Save writes entries in JSON format to a file.
 func (e Entries) Save(file string) error {
-	err := os.Rename(file, file+"~")
-	if err != nil {
-		return err
-	}
 	f, err := os.Create(file)
 	if err != nil {
 		return err
