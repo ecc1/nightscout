@@ -16,6 +16,7 @@ import (
 const (
 	siteEnvVar      = "NIGHTSCOUT_SITE"
 	apiSecretEnvVar = "NIGHTSCOUT_API_SECRET"
+	deviceEnvVar    = "NIGHTSCOUT_DEVICE"
 )
 
 var (
@@ -199,6 +200,15 @@ func Username() string {
 	u := os.Getenv("USER")
 	if len(u) == 0 {
 		return "unknown"
+	}
+	return u
+}
+
+// Device returns the Nightscout device name.
+func Device() string {
+	u := os.Getenv(deviceEnvVar)
+	if len(u) == 0 {
+		return "openaps://" + Hostname()
 	}
 	return u
 }
