@@ -53,33 +53,26 @@ func MergeEntries(u, v Entries) Entries {
 	j := 0
 	for i < len(u) || j < len(v) {
 		if j == len(v) || (i < len(u) && u[i].After(v[j])) {
-			if u[i] != prev {
-				m = append(m, u[i])
-				prev = u[i]
-			}
-			i++
+			m.addEntry(u, &i, &prev)
 			continue
 		}
 		if i == len(u) || (j < len(v) && v[j].After(u[i])) {
-			if v[j] != prev {
-				m = append(m, v[j])
-				prev = v[j]
-			}
-			j++
+			m.addEntry(v, &j, &prev)
 			continue
 		}
-		if u[i] != prev {
-			m = append(m, u[i])
-			prev = u[i]
-		}
-		i++
-		if v[j] != prev {
-			m = append(m, v[j])
-			prev = v[j]
-		}
-		j++
+		m.addEntry(u, &i, &prev)
+		m.addEntry(v, &j, &prev)
 	}
 	return m
+}
+
+func (e *Entries) addEntry(v Entries, i *int, prev *Entry) {
+	cur := v[*i]
+	if cur != *prev {
+		*e = append(*e, cur)
+		*prev = cur
+	}
+	*i = *i + 1
 }
 
 // Write writes entries in JSON format to an io.Writer.
