@@ -14,9 +14,11 @@ import (
 )
 
 const (
-	siteEnvVar      = "NIGHTSCOUT_SITE"
-	apiSecretEnvVar = "NIGHTSCOUT_API_SECRET"
-	deviceEnvVar    = "NIGHTSCOUT_DEVICE"
+	siteEnvVar            = "NIGHTSCOUT_SITE"
+	legacySiteEnvVar      = "NIGHTSCOUT_HOST"
+	apiSecretEnvVar       = "NIGHTSCOUT_API_SECRET"
+	legacyApiSecretEnvVar = "API_SECRET"
+	deviceEnvVar          = "NIGHTSCOUT_DEVICE"
 )
 
 var (
@@ -47,7 +49,10 @@ func SetNoUpload(flag bool) {
 func sitename() (string, error) {
 	site := os.Getenv(siteEnvVar)
 	if len(site) == 0 {
-		return "", fmt.Errorf("%s is not set", siteEnvVar)
+		site := os.Getenv(legacySiteEnvVar)
+		if len(site) == 0 {
+			return "", fmt.Errorf("%s is not set", siteEnvVar)
+		}
 	}
 	return site, nil
 }
@@ -55,7 +60,10 @@ func sitename() (string, error) {
 func apiSecret() (string, error) {
 	secret := os.Getenv(apiSecretEnvVar)
 	if len(secret) == 0 {
-		return "", fmt.Errorf("%s is not set", apiSecretEnvVar)
+		secret := os.Getenv(legacyApiSecretEnvVar)
+		if len(secret) == 0 {
+			return "", fmt.Errorf("%s is not set", apiSecretEnvVar)
+		}
 	}
 	return secret, nil
 }
