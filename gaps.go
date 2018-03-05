@@ -66,7 +66,7 @@ func findGaps(entries []time.Time, gapDuration time.Duration) []Gap {
 }
 
 const (
-	edgeMargin = 1 * time.Minute
+	edgeMargin = 2 * time.Second
 )
 
 // Missing returns the Entry values that fall within the given gaps.
