@@ -37,14 +37,15 @@ func Gaps(since time.Time, gapDuration time.Duration) ([]Gap, error) {
 	// Sort entries in reverse chronological order,
 	// even though they're currently already returned that way.
 	sort.Sort(entries)
+	times := make([]time.Time, 1+len(entries)+1)
 	// Use current time to end any ongoing gap.
-	times := []time.Time{now}
+	times[0] = now
 	// Convert Date fields to time.Time values.
-	for _, e := range entries {
-		times = append(times, e.Time())
+	for i, e := range entries {
+		times[i+1] = e.Time()
 	}
 	// Use cutoff time to precede any ongoing gap.
-	times = append(times, since)
+	times[1+len(entries)] = since
 	log.Printf("looking for gaps in %d Nightscout records", len(times))
 	return findGaps(times, gapDuration), nil
 }
