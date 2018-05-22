@@ -83,11 +83,11 @@ func TestFindGaps(t *testing.T) {
 		times []time.Time
 		gaps  []Gap
 	}{
-		{[]time.Time{}, []Gap{}},
-		{[]time.Time{T[0]}, []Gap{}},
-		{[]time.Time{T[0], T[1]}, []Gap{}},
+		{nil, nil},
+		{[]time.Time{T[0]}, nil},
+		{[]time.Time{T[0], T[1]}, nil},
 		{[]time.Time{T[0], T[2]}, []Gap{{Finish: T[0], Start: T[2]}}},
-		{[]time.Time{T[18], T[19]}, []Gap{}},
+		{[]time.Time{T[18], T[19]}, nil},
 		{[]time.Time{T[17], T[19]}, []Gap{{Finish: T[17], Start: T[19]}}},
 		{[]time.Time{T[0], T[1], T[2], T[5], T[6], T[7], T[15], T[16], T[19]}, []Gap{{Finish: T[2], Start: T[5]}, {Finish: T[7], Start: T[15]}, {Finish: T[16], Start: T[19]}}},
 	}
