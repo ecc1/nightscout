@@ -6,10 +6,6 @@ import (
 	"time"
 )
 
-const (
-	TestTimeLayout = "2006-01-02 15:04:05"
-)
-
 // Force timezone to match test data.
 func init() {
 	os.Setenv("TZ", "America/New_York")
@@ -39,10 +35,19 @@ func TestTime(t *testing.T) {
 	}
 }
 
+var layouts = []string{
+	"2006-01-02 15:04:05",
+	"2006-01-02 15:04",
+}
+
 func parseTime(s string) time.Time {
-	t, err := time.ParseInLocation(TestTimeLayout, s, time.Local)
-	if err != nil {
-		panic(err)
+	var t time.Time
+	var err error
+	for _, layout := range layouts {
+		t, err = time.ParseInLocation(layout, s, time.Local)
+		if err == nil {
+			return t
+		}
 	}
-	return t
+	panic(err)
 }
