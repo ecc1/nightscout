@@ -73,13 +73,15 @@ func TestSortEntries(t *testing.T) {
 		{E.reversed(), E},
 	}
 	for _, c := range cases {
-		// Make a copy since sorting is done in place.
-		v := make(Entries, len(c.unsorted))
-		copy(v, c.unsorted)
-		v.Sort()
-		if !reflect.DeepEqual(v, c.sorted) {
-			t.Errorf("Sort(%v) == %v, want %v", c.unsorted, v, c.sorted)
-		}
+		t.Run("", func(t *testing.T) {
+			// Make a copy since sorting is done in place.
+			v := make(Entries, len(c.unsorted))
+			copy(v, c.unsorted)
+			v.Sort()
+			if !reflect.DeepEqual(v, c.sorted) {
+				t.Errorf("Sort(%v) == %v, want %v", c.unsorted, v, c.sorted)
+			}
+		})
 	}
 }
 
@@ -96,10 +98,12 @@ func TestTrimEntries(t *testing.T) {
 		{E, parseTime("2017-10-01 01:35:00"), E[:0]},
 	}
 	for _, c := range cases {
-		v := c.untrimmed.TrimAfter(c.cutoff)
-		if !reflect.DeepEqual(v, c.trimmed) {
-			t.Errorf("TrimAfter(%v, %v) == %v, want %v", c.untrimmed, c.cutoff, v, c.trimmed)
-		}
+		t.Run("", func(t *testing.T) {
+			v := c.untrimmed.TrimAfter(c.cutoff)
+			if !reflect.DeepEqual(v, c.trimmed) {
+				t.Errorf("TrimAfter(%v, %v) == %v, want %v", c.untrimmed, c.cutoff, v, c.trimmed)
+			}
+		})
 	}
 }
 
@@ -126,9 +130,11 @@ func TestMergeEntries(t *testing.T) {
 		{odds, evens, E},
 	}
 	for _, c := range cases {
-		v := MergeEntries(c.a, c.b)
-		if !reflect.DeepEqual(v, c.merged) {
-			t.Errorf("MergeEntries(%v, %v) == %v, want %v", c.a, c.b, v, c.merged)
-		}
+		t.Run("", func(t *testing.T) {
+			v := MergeEntries(c.a, c.b)
+			if !reflect.DeepEqual(v, c.merged) {
+				t.Errorf("MergeEntries(%v, %v) == %v, want %v", c.a, c.b, v, c.merged)
+			}
+		})
 	}
 }
