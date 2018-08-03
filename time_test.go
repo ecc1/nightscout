@@ -1,9 +1,19 @@
 package nightscout
 
 import (
+	"os"
 	"testing"
 	"time"
 )
+
+const (
+	TestTimeLayout = "2006-01-02 15:04:05"
+)
+
+// Force timezone to match test data.
+func init() {
+	os.Setenv("TZ", "America/New_York")
+}
 
 func TestTime(t *testing.T) {
 	cases := []struct {
@@ -27,4 +37,12 @@ func TestTime(t *testing.T) {
 			t.Errorf("Date(%v) == %v, want %v", c.t, d, c.d)
 		}
 	}
+}
+
+func parseTime(s string) time.Time {
+	t, err := time.ParseInLocation(TestTimeLayout, s, time.Local)
+	if err != nil {
+		panic(err)
+	}
+	return t
 }

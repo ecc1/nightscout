@@ -8,17 +8,7 @@ import (
 
 const (
 	gapDuration = 7 * time.Minute
-
-	TestTimeLayout = "2006-01-02 15:04:05"
 )
-
-func parseTime(s string) time.Time {
-	t, err := time.ParseInLocation(TestTimeLayout, s, time.Local)
-	if err != nil {
-		panic(err)
-	}
-	return t
-}
 
 var (
 	T = []time.Time{
