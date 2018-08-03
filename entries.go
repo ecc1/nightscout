@@ -34,6 +34,13 @@ func (e Entries) Sort() {
 	sort.Sort(e)
 }
 
+// Reverse reverses the entries, in place.
+func (e Entries) Reverse() {
+	for i, j := 0, len(e)-1; i < len(e)/2; i, j = i+1, j-1 {
+		e[i], e[j] = e[j], e[i]
+	}
+}
+
 // TrimAfter returns the entries that are more recent than the specified time.
 // The entries must be in reverse chronological order.
 func (e Entries) TrimAfter(cutoff time.Time) Entries {

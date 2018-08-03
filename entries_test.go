@@ -23,9 +23,8 @@ func (e Entries) sorted() Entries {
 
 func (e Entries) reversed() Entries {
 	v := make(Entries, len(e))
-	for i, x := range e {
-		v[len(e)-i-1] = x
-	}
+	copy(v, e)
+	v.Reverse()
 	return v
 }
 
