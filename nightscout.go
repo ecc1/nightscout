@@ -104,13 +104,24 @@ func makeRequest(op string, api string, v interface{}) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+	secret, err := apiSecret()
+	if err != nil {
+		return err
+	}
+	token := strings.HasPrefix(secret, "token=")
+	if token {
+	  op += "&"
+	  op += secret
+	} 
 	req, err := http.NewRequest(op, u, r)
 	if err != nil {
 		return nil, err
 	}
-	err = addHeaders(req)
-	if err != nil {
-		return nil, err
+	if ! token {
+		err = addHeaders(req, secret)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return req, nil
 }
@@ -142,11 +153,7 @@ func makeReader(v interface{}) (io.Reader, error) {
 	return bytes.NewReader(data), nil
 }
 
-func addHeaders(req *http.Request) error {
-	secret, err := apiSecret()
-	if err != nil {
-		return err
-	}
+func addHeaders(req *http.Request, secret string) error {
 	req.Header.Add("api-secret", secret)
 	req.Header.Add("accept", "application/json")
 	req.Header.Add("content-type", "application/json")
