@@ -110,7 +110,7 @@ func makeRequest(op string, api string, v interface{}) (*http.Request, error) {
 	}
 	token := strings.HasPrefix(secret, "token=")
 	if token {
-	  op += "&"
+	  op += "?"
 	  op += secret
 	} 
 	req, err := http.NewRequest(op, u, r)
