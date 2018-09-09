@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"strings"
 )
 
 const (
@@ -106,7 +107,7 @@ func makeRequest(op string, api string, v interface{}) (*http.Request, error) {
 	}
 	secret, err := apiSecret()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	token := strings.HasPrefix(secret, "token=")
 	if token {
