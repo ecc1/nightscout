@@ -176,11 +176,7 @@ func Get(api string, result interface{}) error {
 	if err != nil {
 		return err
 	}
-	err := json.Unmarshal(data, result)
-	if err != nil {
-		fmt.Println("json.Unmarshal error:", err)
-	}
-	return err
+	return json.Unmarshal(data, result)
 }
 
 // Upload performs a POST or PUT operation on a Nightscout API.
