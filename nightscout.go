@@ -21,7 +21,7 @@ const (
 )
 
 var (
-	verbose  = false
+	verbose  = true
 	noUpload = false
 )
 
@@ -67,6 +67,15 @@ func RestOperation(op string, api string, v interface{}) ([]byte, error) {
 	if op == "GET" && v != nil {
 		log.Panicf("GET %s operation with data", api)
 	}
+	secret, err := apiSecret()
+	if err != nil {
+		return nil, err
+	}
+	token := strings.HasPrefix(secret, "token=")
+	if token {
+		api += "?"
+		api += secret
+	} 
 	req, err := makeRequest(op, api, v)
 	if err != nil {
 		return nil, err
