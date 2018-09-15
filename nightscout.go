@@ -120,7 +120,7 @@ func makeRequest(op string, api string, v interface{}) (*http.Request, error) {
 	}
 	token := strings.HasPrefix(secret, "token=")
 	if token {
-		hasquery := string.Contains(u, "?")
+		hasquery := strings.Contains(u, "?")
 		if hasquery {
 			u += "&"
 		} else { 
