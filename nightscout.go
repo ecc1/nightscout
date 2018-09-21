@@ -73,9 +73,20 @@ func RestOperation(op string, api string, v interface{}) ([]byte, error) {
 	}
 	token := strings.HasPrefix(secret, "token=")
 	if token {
-		api += "?"
+		hasquery := strings.Contains(api, "?")
+		if hasquery {
+			api += "&"
+		} else { 
+			api += "?"
+		}
 		api += secret
 	} 
+	if verbose || noUpload {
+		log.Printf("RestOperation: %s %v", op, api)
+		if v != nil {
+			log.Print(JSON(v))
+		}
+	}
 	req, err := makeRequest(op, api, v)
 	if err != nil {
 		return nil, err
