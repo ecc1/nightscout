@@ -17,6 +17,7 @@ const (
 	siteEnvVar      = "NIGHTSCOUT_SITE"
 	apiSecretEnvVar = "NIGHTSCOUT_API_SECRET"
 	deviceEnvVar    = "NIGHTSCOUT_DEVICE"
+	apiToken        = "NIGHTSCOUT_TOKEN"
 )
 
 var (
@@ -54,8 +55,9 @@ func sitename() (string, error) {
 
 func apiSecret() (string, error) {
 	secret := os.Getenv(apiSecretEnvVar)
-	if len(secret) == 0 {
-		return "", fmt.Errorf("%s is not set", apiSecretEnvVar)
+	token := os.Getenv(apiToken)
+	if len(secret) == 0 && len(token) == 0 {
+		return "", fmt.Errorf("%s and %s is not set", apiSecretEnvVar, apiToken)
 	}
 	return secret, nil
 }
@@ -120,15 +122,23 @@ func makeURL(op string, api string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	NSapiToken := os.Getenv(apiToken);
+	
 	siteURL, err := url.Parse(site)
 	if err != nil {
 		return "", err
 	}
-	u, err := url.Parse(path.Join("api", "v1", api))
+	if len(NSapiToken) > 0 {
+	u, err := url.Parse(path.Join("api", "v1", api, "?token=", NSapiToken))
 	if err != nil {
 		return "", err
 	}
 	return siteURL.ResolveReference(u).String(), nil
+	} else {
+	u, err := url.Parse(path.Join("api", "v1", api))
+	if err != nil {
+		return "", err	
+	}
 }
 
 func makeReader(v interface{}) (io.Reader, error) {
