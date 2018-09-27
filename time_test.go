@@ -24,14 +24,16 @@ func TestTime(t *testing.T) {
 		{1505625229000, parseTime("2017-09-17 01:13:49")},
 	}
 	for _, c := range cases {
-		tv := msecsToTime(c.d)
-		if !tv.Equal(c.t) {
-			t.Errorf("msecsToTime(%v) == %v, want %v", c.d, tv, c.t)
-		}
-		d := Date(c.t)
-		if d != c.d {
-			t.Errorf("Date(%v) == %v, want %v", c.t, d, c.d)
-		}
+		t.Run("", func(t *testing.T) {
+			tv := msecsToTime(c.d)
+			if !tv.Equal(c.t) {
+				t.Errorf("msecsToTime(%v) == %v, want %v", c.d, tv, c.t)
+			}
+			d := Date(c.t)
+			if d != c.d {
+				t.Errorf("Date(%v) == %v, want %v", c.t, d, c.d)
+			}
+		})
 	}
 }
 

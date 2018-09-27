@@ -82,10 +82,12 @@ func TestFindGaps(t *testing.T) {
 		{[]time.Time{T[0], T[1], T[2], T[5], T[6], T[7], T[15], T[16], T[19]}, []Gap{{Finish: T[2], Start: T[5]}, {Finish: T[7], Start: T[15]}, {Finish: T[16], Start: T[19]}}},
 	}
 	for _, c := range cases {
-		g := findGaps(c.times, gapDuration)
-		if !equalGaps(g, c.gaps) {
-			t.Errorf("findGaps(%v) == %+v, want %+v", c.times, g, c.gaps)
-		}
+		t.Run("", func(t *testing.T) {
+			g := findGaps(c.times, gapDuration)
+			if !equalGaps(g, c.gaps) {
+				t.Errorf("findGaps(%v) == %+v, want %+v", c.times, g, c.gaps)
+			}
+		})
 	}
 }
 
@@ -112,10 +114,12 @@ func TestMissing(t *testing.T) {
 		{E, []Gap{{Finish: T[2], Start: T[5]}, {Finish: T[7], Start: T[9]}, {Finish: T[16], Start: T[19]}}, Entries{E[3], E[4], E[8], E[17], E[18]}},
 	}
 	for _, c := range cases {
-		missing := Missing(c.entries, c.gaps)
-		if !equalEntries(missing, c.missing) {
-			t.Errorf("Missing(%v, %+v) == %v, want %v", c.entries, c.gaps, missing, c.missing)
-		}
+		t.Run("", func(t *testing.T) {
+			missing := Missing(c.entries, c.gaps)
+			if !equalEntries(missing, c.missing) {
+				t.Errorf("Missing(%v, %+v) == %v, want %v", c.entries, c.gaps, missing, c.missing)
+			}
+		})
 	}
 }
 
