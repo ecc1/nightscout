@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"strings"
 )
 
 const (
@@ -124,11 +125,29 @@ func makeURL(op string, api string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	u, err := url.Parse(path.Join("api", "v1", api))
-	if err != nil {
+	 token, err := apiSecret()
+	 if token[0:5] == "token" {
+	  token := token[6:len(token)]
+           if strings.Index(api, "?") > -1 {
+	     u, err := url.Parse(path.Join("api", "v1", api + "&token=" + token))
+	     if err != nil {
+	 	   return "", err
+	     }
+	     return siteURL.ResolveReference(u).String(), nil
+           } else {
+           u, err := url.Parse(path.Join("api", "v1", api + "?token=" + token))
+	    if err != nil {
+	 	return "", err
+	    }
+	    return siteURL.ResolveReference(u).String(), nil
+           }
+	 } else {	 	 
+	 u, err := url.Parse(path.Join("api", "v1", api))
+	 if err != nil {
 		return "", err
+	 }
+	 return siteURL.ResolveReference(u).String(), nil
 	}
-	return siteURL.ResolveReference(u).String(), nil
 }
 
 func makeReader(v interface{}) (io.Reader, error) {
