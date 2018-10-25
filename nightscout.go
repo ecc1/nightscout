@@ -21,7 +21,7 @@ const (
 )
 
 var (
-	verbose  = true
+	verbose  = false
 	noUpload = false
 )
 
@@ -67,26 +67,6 @@ func RestOperation(op string, api string, v interface{}) ([]byte, error) {
 	if op == "GET" && v != nil {
 		log.Panicf("GET %s operation with data", api)
 	}
-	secret, err := apiSecret()
-	if err != nil {
-		return nil, err
-	}
-	token := strings.HasPrefix(secret, "token=")
-	if token {
-		hasquery := strings.Contains(api, "?")
-		if hasquery {
-			api += "&"
-		} else { 
-			api += "?"
-		}
-		api += secret
-	} 
-	if verbose || noUpload {
-		log.Printf("RestOperation: %s %v", op, api)
-		if v != nil {
-			log.Print(JSON(v))
-		}
-	}
 	req, err := makeRequest(op, api, v)
 	if err != nil {
 		return nil, err
@@ -125,29 +105,13 @@ func makeRequest(op string, api string, v interface{}) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-	secret, err := apiSecret()
-	if err != nil {
-		return nil, err
-	}
-	token := strings.HasPrefix(secret, "token=")
-	if token {
-		hasquery := strings.Contains(u, "?")
-		if hasquery {
-			u += "&"
-		} else { 
-			u += "?"
-		}
-	  u += secret
-	} 
 	req, err := http.NewRequest(op, u, r)
 	if err != nil {
 		return nil, err
 	}
-	if ! token {
-		err = addHeaders(req, secret)
-		if err != nil {
-			return nil, err
-		}
+	err = addHeaders(req)
+	if err != nil {
+		return nil, err
 	}
 	return req, nil
 }
@@ -161,11 +125,29 @@ func makeURL(op string, api string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	u, err := url.Parse(path.Join("api", "v1", api))
-	if err != nil {
+	 token, err := apiSecret()
+	 if token[0:5] == "token" {
+	  token := token[6:len(token)]
+           if strings.Index(api, "?") > -1 {
+	     u, err := url.Parse(path.Join("api", "v1", api + "&token=" + token))
+	     if err != nil {
+	 	   return "", err
+	     }
+	     return siteURL.ResolveReference(u).String(), nil
+           } else {
+           u, err := url.Parse(path.Join("api", "v1", api + "?token=" + token))
+	    if err != nil {
+	 	return "", err
+	    }
+	    return siteURL.ResolveReference(u).String(), nil
+           }
+	 } else {	 	 
+	 u, err := url.Parse(path.Join("api", "v1", api))
+	 if err != nil {
 		return "", err
+	 }
+	 return siteURL.ResolveReference(u).String(), nil
 	}
-	return siteURL.ResolveReference(u).String(), nil
 }
 
 func makeReader(v interface{}) (io.Reader, error) {
@@ -179,7 +161,11 @@ func makeReader(v interface{}) (io.Reader, error) {
 	return bytes.NewReader(data), nil
 }
 
-func addHeaders(req *http.Request, secret string) error {
+func addHeaders(req *http.Request) error {
+	secret, err := apiSecret()
+	if err != nil {
+		return err
+	}
 	req.Header.Add("api-secret", secret)
 	req.Header.Add("accept", "application/json")
 	req.Header.Add("content-type", "application/json")
@@ -192,7 +178,11 @@ func Get(api string, result interface{}) error {
 	if err != nil {
 		return err
 	}
-	return json.Unmarshal(data, result)
+	if err := json.Unmarshal(data, &result); err != nil {
+		log.Panicf("Error with Unmarshall: %s", data)
+		panic(err)
+	}
+	return result, err
 }
 
 // Upload performs a POST or PUT operation on a Nightscout API.
