@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"regexp"
 	"strings"
 )
 
@@ -125,29 +126,29 @@ func makeURL(op string, api string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	 token, err := apiSecret()
-	 if token[0:5] == "token" {
-	  token := token[6:len(token)]
-           if strings.Index(api, "?") > -1 {
-	     u, err := url.Parse(path.Join("api", "v1", api + "&token=" + token))
-	     if err != nil {
-	 	   return "", err
-	     }
-	     return siteURL.ResolveReference(u).String(), nil
-           } else {
-           u, err := url.Parse(path.Join("api", "v1", api + "?token=" + token))
-	    if err != nil {
-	 	return "", err
-	    }
-	    return siteURL.ResolveReference(u).String(), nil
-           }
-	 } else {	 	 
-	 u, err := url.Parse(path.Join("api", "v1", api))
-	 if err != nil {
-		return "", err
-	 }
-	 return siteURL.ResolveReference(u).String(), nil
+	u, err := url.Parse(path.Join("api", "v1", api))
+	if err != nil {
+	   return "", err
 	}
+	
+	// append token to the URL if the users uses token based authentication
+	secret, err := apiSecret()
+	if err != nil {
+		return "", err
+	}
+	hasToken := strings.HasPrefix(secret, "token=")
+	if hasToken { // users uses token based authentication
+		token := secret[6:len(secret)] // drop the token= prefix
+		match, _ := regexp.MatchString("^[a-z_0-9]{0,10}-[a-f0-9]{16}$", token) // subjectName is up to ten lowercase letters, numbers or underscore, followed by '-' and followed by a 16 hex shasum digest
+		if match {
+			q := u.Query() // Get a copy of the query values.
+			q.Add("token", token)
+			u.RawQuery = q.Encode() // Encode and assign back to the original query.
+		} else {
+			return "", fmt.Errorf("Not a valid Nightscout token: %s. Expected ^token=[a-z_0-9]{0,10}-[a-f0-9]{16}$ as Nightscout secret", secret)
+		}
+	}
+	return siteURL.ResolveReference(u).String(), nil
 }
 
 func makeReader(v interface{}) (io.Reader, error) {
@@ -178,11 +179,7 @@ func Get(api string, result interface{}) error {
 	if err != nil {
 		return err
 	}
-	if err := json.Unmarshal(data, &result); err != nil {
-		log.Panicf("Error with Unmarshall: %s", data)
-		panic(err)
-	}
-	return result, err
+	return json.Unmarshal(data, result)
 }
 
 // Upload performs a POST or PUT operation on a Nightscout API.
