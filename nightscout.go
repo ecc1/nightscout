@@ -11,6 +11,8 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"regexp"
+	"strings"
 )
 
 const (
@@ -79,7 +81,7 @@ func RestOperation(op string, api string, v interface{}) ([]byte, error) {
 		return nil, err
 	}
 	result, err := ioutil.ReadAll(resp.Body)
-	_ = resp.Body.Close()
+	resp.Body.Close()
 	if verbose && err == nil {
 		log.Print(indentJSON(result))
 	}
@@ -128,7 +130,31 @@ func makeURL(op string, api string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	secret, err := apiSecret()
+	if err != nil {
+		return "", err
+	}
+	if usesTokenAuth(secret) {
+		// Validate token.
+		token := secret[len("token="):]
+		if !validToken.MatchString(token) {
+			return "", fmt.Errorf("invalid Nightscout token %q", secret)
+		}
+		// Append token to the URL parameters.
+		q := u.Query()
+		q.Add("token", token)
+		u.RawQuery = q.Encode()
+	}
 	return siteURL.ResolveReference(u).String(), nil
+}
+
+// Auth token must be of the form <subject name>-<hash code>,
+// where the subject name is up to ten lowercase letters, digits, or underscores
+// and the hash code is the first 16 hex digits of the SHA-1 digest of the API secret plus Mongo ObjectID.
+var validToken = regexp.MustCompile(`^[a-z_0-9]{0,10}-[a-f0-9]{16}$`)
+
+func usesTokenAuth(secret string) bool {
+	return strings.HasPrefix(secret, "token=")
 }
 
 func makeReader(v interface{}) (io.Reader, error) {
@@ -147,9 +173,11 @@ func addHeaders(req *http.Request) error {
 	if err != nil {
 		return err
 	}
-	req.Header.Add("api-secret", secret)
 	req.Header.Add("accept", "application/json")
 	req.Header.Add("content-type", "application/json")
+	if !usesTokenAuth(secret) {
+		req.Header.Add("api-secret", secret)
+	}
 	return nil
 }
 
