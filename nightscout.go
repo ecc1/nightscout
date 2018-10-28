@@ -19,11 +19,13 @@ const (
 	siteEnvVar      = "NIGHTSCOUT_SITE"
 	apiSecretEnvVar = "NIGHTSCOUT_API_SECRET"
 	deviceEnvVar    = "NIGHTSCOUT_DEVICE"
+	validTokenRegExpVar = `^[a-z_0-9]{0,10}-[a-f0-9]{16}$` // up to ten lowercase letters, numbers or underscore, followed by '-' and followed by a 16 hex shasum digest of the Mongo ObjectID and the api secret 
 )
 
 var (
 	verbose  = false
 	noUpload = false
+	validToken = regexp.MustCompile(validTokenRegExpVar)
 )
 
 // Verbose returns the value of the verbose flag.
@@ -137,17 +139,17 @@ func makeURL(op string, api string) (string, error) {
 		return "", err
 	}
 	hasToken := strings.HasPrefix(secret, "token=")
-	if hasToken { // users uses token based authentication
-		token := secret[6:len(secret)] // drop the token= prefix
-		match, _ := regexp.MatchString("^[a-z_0-9]{0,10}-[a-f0-9]{16}$", token) // subjectName is up to ten lowercase letters, numbers or underscore, followed by '-' and followed by a 16 hex shasum digest
-		if match {
-			q := u.Query() // Get a copy of the query values.
-			q.Add("token", token)
-			u.RawQuery = q.Encode() // Encode and assign back to the original query.
-		} else {
-			return "", fmt.Errorf("Not a valid Nightscout token: %s. Expected ^token=[a-z_0-9]{0,10}-[a-f0-9]{16}$ as Nightscout secret", secret)
-		}
+	if !hasToken { // users does not return token based authentication
+		return siteURL.ResolveReference(u).String(), nil
 	}
+	// users uses tokenbased authentication
+	token := secret[6:len(secret)] // drop the token= prefix
+	if !validToken.MatchString(token) {
+		return "", fmt.Errorf("Not a valid Nightscout token: %s. Expected token= followed by regexp %s as Nightscout secret", secret, validTokenRegExpVar)
+	}
+	q := u.Query() // Get a copy of the query values.
+	q.Add("token", token) // Add token with token based authentication string
+	u.RawQuery = q.Encode() // Encode and assign back to the original query.
 	return siteURL.ResolveReference(u).String(), nil
 }
 
@@ -167,9 +169,14 @@ func addHeaders(req *http.Request) error {
 	if err != nil {
 		return err
 	}
-	req.Header.Add("api-secret", secret)
+	// add these headers to the request
 	req.Header.Add("accept", "application/json")
 	req.Header.Add("content-type", "application/json")
+	if strings.HasPrefix(secret, "token=") { // users uses token based authentication
+		return nil // don't add api-secret header
+	}
+	// user uses no token based authentication, so add (hashed) api-secret to the headers
+	req.Header.Add("api-secret", secret)
 	return nil
 }
 
