@@ -46,7 +46,7 @@ func SetNoUpload(flag bool) {
 	noUpload = flag
 }
 
-func sitename() (string, error) {
+func SiteName() (string, error) {
 	site := os.Getenv(siteEnvVar)
 	if len(site) == 0 {
 		return "", fmt.Errorf("%s is not set", siteEnvVar)
@@ -54,7 +54,7 @@ func sitename() (string, error) {
 	return site, nil
 }
 
-func apiSecret() (string, error) {
+func APISecret() (string, error) {
 	secret := os.Getenv(apiSecretEnvVar)
 	if len(secret) == 0 {
 		return "", fmt.Errorf("%s is not set", apiSecretEnvVar)
@@ -118,7 +118,7 @@ func makeRequest(op string, api string, v interface{}) (*http.Request, error) {
 }
 
 func makeURL(op string, api string) (string, error) {
-	site, err := sitename()
+	site, err := SiteName()
 	if err != nil {
 		return "", err
 	}
@@ -130,7 +130,7 @@ func makeURL(op string, api string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	secret, err := apiSecret()
+	secret, err := APISecret()
 	if err != nil {
 		return "", err
 	}
@@ -169,7 +169,7 @@ func makeReader(v interface{}) (io.Reader, error) {
 }
 
 func addHeaders(req *http.Request) error {
-	secret, err := apiSecret()
+	secret, err := APISecret()
 	if err != nil {
 		return err
 	}
