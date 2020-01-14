@@ -39,7 +39,7 @@ var (
 	}
 )
 
-const tolerance = 1E-06
+const tolerance = 1e-06
 
 func closeEnough(x, y float64) bool {
 	return math.Abs(x-y) <= tolerance
