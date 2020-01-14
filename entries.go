@@ -100,7 +100,7 @@ func (e Entries) Save(file string) error {
 	if err != nil {
 		return err
 	}
-	defer func() { _ = f.Close() }()
+	defer f.Close()
 	return e.Write(f)
 }
 
@@ -110,7 +110,7 @@ func ReadEntries(file string) (Entries, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer func() { _ = f.Close() }()
+	defer f.Close()
 	d := json.NewDecoder(f)
 	var contents Entries
 	err = d.Decode(&contents)
