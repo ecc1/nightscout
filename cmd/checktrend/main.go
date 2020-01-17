@@ -21,7 +21,7 @@ func main() {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
-	entries, err := nightscout.ReadEntries(flag.Arg(0))
+	entries, err := nightscout.ReadEntriesFile(flag.Arg(0))
 	if err != nil {
 		log.Fatal(err)
 	}

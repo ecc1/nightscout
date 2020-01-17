@@ -1,18 +1,15 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/ecc1/nightscout"
 )
 
 func main() {
-	nightscout.SetVerbose(true)
-	var entries nightscout.Entries
-	err := nightscout.Get("entries", &entries)
+	entries, err := nightscout.DownloadEntries(10)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(nightscout.JSON(entries))
+	entries.Print()
 }

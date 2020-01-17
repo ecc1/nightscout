@@ -3,8 +3,10 @@ package nightscout
 import (
 	"encoding/json"
 	"io"
+	"net/url"
 	"os"
 	"sort"
+	"strconv"
 	"time"
 )
 
@@ -104,15 +106,29 @@ func (e Entries) Save(file string) error {
 	return e.Write(f)
 }
 
-// ReadEntries reads entries in JSON format from a file.
-func ReadEntries(file string) (Entries, error) {
+// ReadEntries reads entries in JSON fromat from an io.Reader.
+func ReadEntries(r io.Reader) (Entries, error) {
+	var entries Entries
+	err := json.NewDecoder(r).Decode(&entries)
+	return entries, err
+}
+
+// ReadEntriesFile reads entries in JSON format from a file.
+func ReadEntriesFile(file string) (Entries, error) {
 	f, err := os.Open(file)
 	if err != nil {
 		return nil, err
 	}
 	defer f.Close()
-	d := json.NewDecoder(f)
-	var contents Entries
-	err = d.Decode(&contents)
-	return contents, err
+	return ReadEntries(f)
+}
+
+// DownloadEntries downloads the n most recent entries from Nightscout.
+func DownloadEntries(n int) (Entries, error) {
+	params := url.Values{}
+	params.Add("count", strconv.Itoa(n))
+	rest := "entries?" + params.Encode()
+	var entries Entries
+	err := Get(rest, &entries)
+	return entries, err
 }
