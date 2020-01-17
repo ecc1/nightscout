@@ -25,8 +25,11 @@ func Gaps(since time.Time, gapDuration time.Duration) ([]Gap, error) {
 	// Consider only entries uploaded by this device.
 	params.Add("find[device]", Device())
 	// 2 entries per minute should be plenty.
-	params.Add("count", strconv.Itoa(2*int(window/time.Minute)))
-	rest := "entries.json?" + params.Encode()
+	numEntries := 2 * int(window/time.Minute)
+	if numEntries > 10 {
+		params.Add("count", strconv.Itoa(numEntries))
+	}
+	rest := "entries?" + params.Encode()
 	var entries EntryTimes
 	// Suppress verbose output for this.
 	v := Verbose()
