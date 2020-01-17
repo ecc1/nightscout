@@ -94,7 +94,11 @@ func makeRequest(op string, api string, v interface{}) (*http.Request, error) {
 		return nil, err
 	}
 	if verbose || noUpload {
-		log.Printf("%s %v", op, u)
+		q, err := url.QueryUnescape(u)
+		if err != nil {
+			q = u
+		}
+		log.Printf("%s %s", op, q)
 		if v != nil {
 			log.Print(JSON(v))
 		}
