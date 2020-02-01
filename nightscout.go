@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -62,33 +61,42 @@ func APISecret() (string, error) {
 	return secret, nil
 }
 
-// RestOperation performs an operation on a Nightscout API,
-// with optional JSON data, and returns the result.
-func RestOperation(op string, api string, v interface{}) ([]byte, error) {
-	if op == "GET" && v != nil {
-		log.Panicf("GET %s operation with data", api)
+func restOperation(op string, api string, data interface{}, result interface{}) error {
+	switch op {
+	case "GET":
+		if data != nil {
+			log.Panicf("GET %s operation with data", api)
+		}
+	case "POST", "PUT":
+		if data == nil {
+			log.Panicf("%s %s operation with no data", op, api)
+		}
+	default:
+		log.Panicf("unsupported %s %s operation", op, api)
 	}
-	req, err := makeRequest(op, api, v)
+	req, err := makeRequest(op, api, data)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if req == nil {
-		return []byte("[]"), nil
+		return nil
 	}
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	result, err := ioutil.ReadAll(resp.Body)
+	if result != nil {
+		err = json.NewDecoder(resp.Body).Decode(result)
+	}
 	resp.Body.Close()
 	if verbose && err == nil {
-		log.Print(indentJSON(result))
+		log.Print(JSON(result))
 	}
-	return result, err
+	return err
 }
 
-func makeRequest(op string, api string, v interface{}) (*http.Request, error) {
+func makeRequest(op string, api string, data interface{}) (*http.Request, error) {
 	u, err := makeURL(op, api)
 	if err != nil {
 		return nil, err
@@ -99,14 +107,14 @@ func makeRequest(op string, api string, v interface{}) (*http.Request, error) {
 			q = u
 		}
 		log.Printf("%s %s", op, q)
-		if v != nil {
-			log.Print(JSON(v))
+		if data != nil {
+			log.Print(JSON(data))
 		}
 	}
 	if noUpload && op != "GET" {
 		return nil, nil
 	}
-	r, err := makeReader(v)
+	r, err := makeReader(data)
 	if err != nil {
 		return nil, err
 	}
@@ -187,35 +195,17 @@ func addHeaders(req *http.Request) error {
 
 // Get performs a GET operation on a Nightscout API.
 func Get(api string, result interface{}) error {
-	data, err := RestOperation("GET", api, nil)
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal(data, result)
+	return restOperation("GET", api, nil, result)
 }
 
-// Upload performs a POST or PUT operation on a Nightscout API.
-func Upload(op string, api string, param interface{}) error {
-	switch op {
-	case "POST", "PUT":
-		if param == nil {
-			log.Panicf("%s %s operation with no data", op, api)
-		}
-	default:
-		log.Panicf("%s %s used for upload", op, api)
-	}
-	_, err := RestOperation(op, api, param)
-	return err
+// Upload performs a POST operation on a Nightscout API.
+func Upload(api string, data interface{}) error {
+	return restOperation("POST", api, data, nil)
 }
 
-func indentJSON(data []byte) string {
-	buf := bytes.Buffer{}
-	err := json.Indent(&buf, data, "", "  ")
-	if err != nil {
-		log.Printf("json.Indent error: %v", err)
-		return string(data)
-	}
-	return buf.String()
+// Put performs a PUT operation on a Nightscout API.
+func Put(api string, data interface{}) error {
+	return restOperation("PUT", api, data, nil)
 }
 
 // Hostname returns the host name.
@@ -248,9 +238,9 @@ func Device() string {
 // JSON marshals the given data in indented form
 // and returns it as a string.
 func JSON(v interface{}) string {
-	data, err := json.Marshal(v)
+	data, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
 		return err.Error()
 	}
-	return indentJSON(data)
+	return string(data)
 }
