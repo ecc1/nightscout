@@ -191,10 +191,7 @@ func addHeaders(req *http.Request) error {
 	req.Header.Add("accept", "application/json")
 	req.Header.Add("content-type", "application/json")
 	if !usesTokenAuth(secret) {
-		// xDrip currently only recognizes the following capitalization for the API secret.
-		// Once fixed, use this instead:
-		// req.Header.Add("api-secret", secret)
-		req.Header["api-secret"] = []string{secret}
+		req.Header.Add("api-secret", secret)
 	}
 	return nil
 }
