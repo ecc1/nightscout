@@ -8,34 +8,31 @@ import (
 	"time"
 )
 
-// Gap represents a gap.
+// Gap represents a temporal gap.
 type Gap struct {
 	Start  time.Time
 	Finish time.Time
 }
 
-// Gaps finds gaps in Nightscout entries since the given time
-// that are longer than the specified duration.
-func Gaps(since time.Time, gapDuration time.Duration) ([]Gap, error) {
+// Gaps finds gaps in Nightscout entries since the given time that are longer than the specified duration.
+func (w Website) Gaps(since time.Time, gapDuration time.Duration) ([]Gap, error) {
 	now := time.Now()
 	window := now.Sub(since)
 	log.Printf("retrieving Nightscout records from last %v", window)
 	params := url.Values{}
 	params.Add("find[dateString][$gte]", since.Format(DateStringLayout))
-	// Consider only entries uploaded by this device.
-	params.Add("find[device]", Device())
 	// 2 entries per minute should be plenty.
 	numEntries := 2 * int(window/time.Minute)
 	if numEntries > 10 {
 		params.Add("count", strconv.Itoa(numEntries))
 	}
-	rest := "entries?" + params.Encode()
+	rest := "api/v1/entries?" + params.Encode()
 	var entries EntryTimes
 	// Suppress verbose output for this.
-	v := Verbose()
-	SetVerbose(false)
-	err := Get(rest, &entries)
-	SetVerbose(v)
+	v := w.Verbose()
+	w.SetVerbose(false)
+	err := w.Get(rest, &entries)
+	w.SetVerbose(v)
 	if err != nil {
 		return nil, err
 	}

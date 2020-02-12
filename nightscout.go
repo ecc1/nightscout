@@ -9,10 +9,15 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"regexp"
 	"strings"
 )
+
+type Website struct {
+	URL      *url.URL
+	noUpload bool
+	verbose  bool
+}
 
 const (
 	siteEnvVar      = "NIGHTSCOUT_SITE"
@@ -20,37 +25,21 @@ const (
 	deviceEnvVar    = "NIGHTSCOUT_DEVICE"
 )
 
-var (
-	verbose  = false
-	noUpload = false
-)
-
-// Verbose returns the value of the verbose flag.
-func Verbose() bool {
-	return verbose
+func Site(site string) (*Website, error) {
+	u, err := url.Parse(site)
+	return &Website{URL: u}, err
 }
 
-// SetVerbose sets the value of the verbose flag.
-func SetVerbose(flag bool) {
-	verbose = flag
-}
-
-// NoUpload returns the value of the noUpload flag.
-func NoUpload() bool {
-	return noUpload
-}
-
-// SetNoUpload sets the value of the noUpload flag.
-func SetNoUpload(flag bool) {
-	noUpload = flag
-}
-
-func SiteName() (string, error) {
+func DefaultSite() (*Website, error) {
 	site := os.Getenv(siteEnvVar)
 	if len(site) == 0 {
-		return "", fmt.Errorf("%s is not set", siteEnvVar)
+		return nil, fmt.Errorf("%s is not set", siteEnvVar)
 	}
-	return site, nil
+	return Site(site)
+}
+
+func (w *Website) String() string {
+	return w.URL.String()
 }
 
 func APISecret() (string, error) {
@@ -61,7 +50,27 @@ func APISecret() (string, error) {
 	return secret, nil
 }
 
-func restOperation(op string, api string, data interface{}, result interface{}) error {
+// Verbose returns the value of the verbose flag.
+func (w *Website) Verbose() bool {
+	return w.verbose
+}
+
+// SetVerbose sets the value of the verbose flag.
+func (w *Website) SetVerbose(flag bool) {
+	w.verbose = flag
+}
+
+// NoUpload returns the value of the noUpload flag.
+func (w *Website) NoUpload() bool {
+	return w.noUpload
+}
+
+// SetNoUpload sets the value of the noUpload flag.
+func (w *Website) SetNoUpload(flag bool) {
+	w.noUpload = flag
+}
+
+func (w *Website) restOperation(op string, api string, data interface{}, result interface{}) error {
 	switch op {
 	case "GET":
 		if data != nil {
@@ -74,34 +83,12 @@ func restOperation(op string, api string, data interface{}, result interface{}) 
 	default:
 		log.Panicf("unsupported %s %s operation", op, api)
 	}
-	req, err := makeRequest(op, api, data)
+	req, err := w.makeRequest(op, api, data)
 	if err != nil {
 		return err
 	}
-	if req == nil {
-		return nil
-	}
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	if result != nil {
-		err = json.NewDecoder(resp.Body).Decode(result)
-	}
-	resp.Body.Close()
-	if verbose && err == nil {
-		log.Print(JSON(result))
-	}
-	return err
-}
-
-func makeRequest(op string, api string, data interface{}) (*http.Request, error) {
-	u, err := makeURL(op, api)
-	if err != nil {
-		return nil, err
-	}
-	if verbose || noUpload {
+	if w.verbose || w.noUpload {
+		u := req.URL.String()
 		q, err := url.QueryUnescape(u)
 		if err != nil {
 			q = u
@@ -111,8 +98,32 @@ func makeRequest(op string, api string, data interface{}) (*http.Request, error)
 			log.Print(JSON(data))
 		}
 	}
-	if noUpload && op != "GET" {
-		return nil, nil
+	if w.noUpload && op != "GET" {
+		return nil
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	code := resp.StatusCode
+	if code != http.StatusOK {
+		return fmt.Errorf("%v: %d %s", req.URL, code, http.StatusText(code))
+	}
+	if result != nil {
+		err = json.NewDecoder(resp.Body).Decode(result)
+	}
+	if w.verbose && err == nil && result != nil {
+		log.Print(JSON(result))
+	}
+	return err
+}
+
+func (w *Website) makeRequest(op string, api string, data interface{}) (*http.Request, error) {
+	u, err := w.makeURL(op, api)
+	if err != nil {
+		return nil, err
 	}
 	r, err := makeReader(data)
 	if err != nil {
@@ -129,16 +140,8 @@ func makeRequest(op string, api string, data interface{}) (*http.Request, error)
 	return req, nil
 }
 
-func makeURL(op string, api string) (string, error) {
-	site, err := SiteName()
-	if err != nil {
-		return "", err
-	}
-	siteURL, err := url.Parse(site)
-	if err != nil {
-		return "", err
-	}
-	u, err := url.Parse(path.Join("api", "v1", api))
+func (w *Website) makeURL(op string, api string) (string, error) {
+	u, err := url.Parse(api)
 	if err != nil {
 		return "", err
 	}
@@ -157,7 +160,7 @@ func makeURL(op string, api string) (string, error) {
 		q.Add("token", token)
 		u.RawQuery = q.Encode()
 	}
-	return siteURL.ResolveReference(u).String(), nil
+	return w.URL.ResolveReference(u).String(), nil
 }
 
 // Auth token must be of the form <subject name>-<hash code>,
@@ -188,24 +191,27 @@ func addHeaders(req *http.Request) error {
 	req.Header.Add("accept", "application/json")
 	req.Header.Add("content-type", "application/json")
 	if !usesTokenAuth(secret) {
-		req.Header.Add("api-secret", secret)
+		// xDrip currently only recognizes the following capitalization for the API secret.
+		// Once fixed, use this instead:
+		// req.Header.Add("api-secret", secret)
+		req.Header["api-secret"] = []string{secret}
 	}
 	return nil
 }
 
 // Get performs a GET operation on a Nightscout API.
-func Get(api string, result interface{}) error {
-	return restOperation("GET", api, nil, result)
+func (w *Website) Get(api string, result interface{}) error {
+	return w.restOperation("GET", api, nil, result)
 }
 
 // Upload performs a POST operation on a Nightscout API.
-func Upload(api string, data interface{}) error {
-	return restOperation("POST", api, data, nil)
+func (w *Website) Upload(api string, data interface{}) error {
+	return w.restOperation("POST", api, data, nil)
 }
 
 // Put performs a PUT operation on a Nightscout API.
-func Put(api string, data interface{}) error {
-	return restOperation("PUT", api, data, nil)
+func (w *Website) Put(api string, data interface{}) error {
+	return w.restOperation("PUT", api, data, nil)
 }
 
 // Hostname returns the host name.

@@ -124,11 +124,11 @@ func ReadEntriesFile(file string) (Entries, error) {
 }
 
 // DownloadEntries downloads the n most recent entries from Nightscout.
-func DownloadEntries(n int) (Entries, error) {
+func (w Website) DownloadEntries(n int) (Entries, error) {
 	params := url.Values{}
 	params.Add("count", strconv.Itoa(n))
-	rest := "entries?" + params.Encode()
+	rest := "api/v1/entries?" + params.Encode()
 	var entries Entries
-	err := Get(rest, &entries)
+	err := w.Get(rest, &entries)
 	return entries, err
 }
