@@ -15,7 +15,7 @@ import (
 
 type Website struct {
 	URL      *url.URL
-	client   *http.Client
+	Client   *http.Client
 	noUpload bool
 	verbose  bool
 }
@@ -28,7 +28,13 @@ const (
 
 func Site(site string) (*Website, error) {
 	u, err := url.Parse(site)
-	return &Website{URL: u}, err
+	if err != nil {
+		return nil, err
+	}
+	return &Website{
+		URL:    u,
+		Client: &http.Client{},
+	}, nil
 }
 
 func DefaultSite() (*Website, error) {
@@ -102,10 +108,7 @@ func (w *Website) restOperation(op string, api string, data interface{}, result 
 	if w.noUpload && op != "GET" {
 		return nil
 	}
-	if w.client == nil {
-		w.client = &http.Client{}
-	}
-	resp, err := w.client.Do(req)
+	resp, err := w.Client.Do(req)
 	if err != nil {
 		return err
 	}
