@@ -39,7 +39,7 @@ var (
 	}
 )
 
-const tolerance = 1e-06
+const tolerance = 1e-12
 
 func closeEnough(x, y float64) bool {
 	return math.Abs(x-y) <= tolerance
@@ -51,15 +51,17 @@ func TestFindLine(t *testing.T) {
 		line   Line
 	}{
 		{points0, Line{5.0, 50.0}},
-		{points1, Line{61.272186, -3906.195592}},
-		{points2, Line{1.669862, 9.644737}},
+		{points1, Line{61.272186542110, -3906.195591884244}},
+		{points2, Line{1.669862317066, 9.644736594278}},
 	}
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
 			line := FindLine(c.points)
-			if !(closeEnough(line.Slope, c.line.Slope) &&
-				closeEnough(line.Intercept, c.line.Intercept)) {
-				t.Errorf("FindLine == %#v, want %#v", line, c.line)
+			if !closeEnough(line.Slope, c.line.Slope) {
+				t.Errorf("FindLine: got Slope %v, want %v", line.Slope, c.line.Slope)
+			}
+			if !closeEnough(line.Intercept, c.line.Intercept) {
+				t.Errorf("FindLine: got Intercept %v, want %v", line.Intercept, c.line.Intercept)
 			}
 		})
 	}
