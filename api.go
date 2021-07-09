@@ -36,10 +36,11 @@ type (
 
 	// DeviceStatus represents data for the Nightscout devicestatus API.
 	DeviceStatus struct {
-		Device   string   `json:"device"`
-		Openaps  Openaps  `json:"openaps,omitempty"`
-		Pump     Pump     `json:"pump,omitempty"`
-		Uploader Uploader `json:"uploader,omitempty"`
+		CreatedAt time.Time `json:"created_at"`
+		Device    string    `json:"device"`
+		Openaps   Openaps   `json:"openaps,omitempty"`
+		Pump      Pump      `json:"pump,omitempty"`
+		Uploader  Uploader  `json:"uploader,omitempty"`
 	}
 
 	// Openaps represents the openaps data in a DeviceStatus record.
