@@ -16,6 +16,7 @@ import (
 type Website struct {
 	URL      *url.URL
 	Client   *http.Client
+	Token    string
 	noUpload bool
 	verbose  bool
 }
@@ -49,10 +50,14 @@ func (w *Website) String() string {
 	return w.URL.String()
 }
 
-func APISecret() (string, error) {
+func (w *Website) APISecret() (string, error) {
 	secret := os.Getenv(apiSecretEnvVar)
 	if len(secret) == 0 {
-		return "", fmt.Errorf("%s is not set", apiSecretEnvVar)
+		if len(w.Token) == 0 {
+			return "", fmt.Errorf("%s is not set", apiSecretEnvVar)
+		} else {
+			secret = w.Token
+		}
 	}
 	return secret, nil
 }
@@ -139,7 +144,7 @@ func (w *Website) makeRequest(op string, api string, data interface{}) (*http.Re
 	if err != nil {
 		return nil, err
 	}
-	err = addHeaders(req)
+	err = w.addHeaders(req)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +156,7 @@ func (w *Website) makeURL(op string, api string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	secret, err := APISecret()
+	secret, err := w.APISecret()
 	if err != nil {
 		return "", err
 	}
@@ -189,8 +194,8 @@ func makeReader(v interface{}) (io.Reader, error) {
 	return bytes.NewReader(data), nil
 }
 
-func addHeaders(req *http.Request) error {
-	secret, err := APISecret()
+func (w *Website) addHeaders(req *http.Request) error {
+	secret, err := w.APISecret()
 	if err != nil {
 		return err
 	}
